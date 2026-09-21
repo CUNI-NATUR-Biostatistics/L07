@@ -1,0 +1,98 @@
+{
+  "$schema": "https://raw.githubusercontent.com/CUNI-NATUR-Biostatistics/_internal/main/pollslive/quiz.schema.json",
+  "schemaVersion": 2,
+  "academicYear": "2026-27",
+  "lesson": "L07",
+  "retrievesLesson": "L06",
+  "lectureDate": "2026-11-16",
+  "title": "L07 – Opakování předchozí lekce – 2026/27",
+  "questions": [
+    {
+      "id": "reference-mean",
+      "text": "V modelu hmotnost_tela_g ~ druh je referenční skupinou Adélie. Co znamená intercept?",
+      "options": [
+        {
+          "id": "adelie-mean",
+          "label": "Odhadnutou průměrnou hmotnost Adélií."
+        },
+        {
+          "id": "all-species-mean",
+          "label": "Průměrnou hmotnost všech tří druhů dohromady."
+        },
+        {
+          "id": "gentoo-difference",
+          "label": "Rozdíl mezi Gentoo a Adéliemi."
+        },
+        {
+          "id": "f-statistic",
+          "label": "Hodnotu celkového F-testu."
+        }
+      ],
+      "correctOptionId": "adelie-mean",
+      "explanation": "Při referenci Adélie představuje intercept její odhadnutý průměr; v datech L06 je přibližně 3 701 g.",
+      "media": {
+        "path": "assets/l06-three-species-means.png",
+        "alt": "Bodový graf hmotnosti těla tří druhů tučňáků se zvýrazněnými průměry; průměr Adélií je přibližně 3 700 g.",
+        "provenance": "Byte-identical copy of approved L06 Presentation/Materials/three_species_means.png; SHA-256 0C2CC9C10223440035D6311D54FEFDA1AB21465F3F04577D2087D9A457A8216A; verified by R/render_pollslive_assets.R."
+      }
+    },
+    {
+      "id": "difference-from-reference",
+      "text": "Koeficient druhGentoo ve stejném modelu je přibližně +1 375 g. Jak ho číst?",
+      "options": [
+        {
+          "id": "gentoo-mean",
+          "label": "Gentoo mají podle modelu průměr přibližně 1 375 g."
+        },
+        {
+          "id": "gentoo-vs-adelie",
+          "label": "Odhadnutý průměr Gentoo je přibližně o 1 375 g vyšší než průměr Adélií."
+        },
+        {
+          "id": "every-penguin",
+          "label": "Každý jednotlivý tučňák Gentoo váží přesně o 1 375 g více než Adélie."
+        },
+        {
+          "id": "gentoo-vs-chinstrap",
+          "label": "Gentoo jsou o 1 375 g těžší než Chinstrap."
+        }
+      ],
+      "correctOptionId": "gentoo-vs-adelie",
+      "explanation": "Koeficient druhu je rozdíl jeho odhadnutého průměru vůči referenci Adélie, nikoli samostatný průměr ani rozdíl každé dvojice jedinců.",
+      "media": {
+        "path": "assets/l06-species-coefficients.png",
+        "alt": "Graf koeficientů modelu s referencí Adélie: intercept přibližně 3 701 g, koeficient Chinstrap plus 32 g a koeficient Gentoo plus 1 375 g.",
+        "provenance": "Deterministically rendered by R/render_pollslive_assets.R from a byte-identical copy of approved L06 data/palmer_penguins.csv (SHA-256 1B70D6EABDCEFE166CC0357734FB7C1B1CC1CB9682C0DD16E97F2693BC849FDF) using lm(hmotnost_tela_g ~ druh) with Adelie as reference."
+      }
+    },
+    {
+      "id": "overall-f-test",
+      "text": "Celkový F-test modelu se třemi druhy dal velmi malou p-hodnotu. Co z něj plyne přímo?",
+      "options": [
+        {
+          "id": "all-pairs",
+          "label": "Všechny tři dvojice druhů se navzájem liší."
+        },
+        {
+          "id": "at-least-one-mean",
+          "label": "Alespoň jeden druhový průměr se liší od některého dalšího."
+        },
+        {
+          "id": "which-pair",
+          "label": "Víme, která konkrétní dvojice se liší, bez dalšího porovnání."
+        },
+        {
+          "id": "causal-proof",
+          "label": "Druh tučňáka je prokázanou příčinou rozdílu hmotnosti."
+        }
+      ],
+      "correctOptionId": "at-least-one-mean",
+      "explanation": "Které dvojice se liší, určí až párová porovnání. Samotné srovnání druhů neprokazuje příčinu.",
+      "media": {
+        "path": "assets/l06-f-distribution-showcase.png",
+        "alt": "Graf nulového F-rozdělení a velmi vzdálené pozorované hodnoty F 343,6 s p-hodnotou menší než 0,001.",
+        "provenance": "Byte-identical copy of approved L06 Presentation/Materials/f_distribution_showcase.png; SHA-256 0E62FDA07472CDDC04F38D28EA4B30C093D62FBD3C1326B6D9A6BFD3511C27F1; verified by R/render_pollslive_assets.R."
+      }
+    }
+  ]
+}

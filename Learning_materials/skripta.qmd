@@ -1,0 +1,1277 @@
+---
+title: "Co se změní, když přidáme prediktor?"
+subtitle: "Vícenásobný lineární model na klimatických datech křídlatky"
+lang: cs
+filters:
+  - ../theme/semantic-boxes.lua
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Obsah"
+    number-sections: true
+    code-fold: false
+    embed-resources: true
+    theme: [flatly, ../theme/skripta_theme.scss]
+    highlight-style: github
+    include-in-header:
+      - "../theme/fonts-include.html"
+      - "../theme/skripta-favicon.html"
+  typst:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    output-file: "skripta_raw.pdf"
+    include-in-header:
+      - "skripta_theme.typ"
+      - "skripta-logo.typ"
+date: 2026/08/23
+date-format: long
+date-modified: last-modified
+---
+
+```{r}
+#| label: nastaveni
+#| include: false
+if (!requireNamespace("here", quietly = TRUE)) install.packages("here")
+if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
+if (!requireNamespace("emmeans", quietly = TRUE)) install.packages("emmeans")
+if (!requireNamespace("car", quietly = TRUE)) install.packages("car")
+if (!requireNamespace("ggcorrplot", quietly = TRUE)) install.packages("ggcorrplot")
+if (!requireNamespace("glossary", quietly = TRUE)) install.packages("glossary")
+
+here::i_am("Learning_materials/skripta.qmd")
+source(here::here("R", "set_r_theme.R"))
+
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+
+barvy_puvodu <- c("Puvodni" = "#007C91", "Zavleceny" = "#B4461B")
+popisky_puvodu <- c("Puvodni" = "Původní areál", "Zavleceny" = "Zavlečený areál")
+
+local_pojmy <- here::here("..", "slovnik", "pojmy.yaml")
+glossary::glossary_path(local_pojmy)
+source(here::here("..", "slovnik", "R", "Functions", "render_glossary_term.R"))
+```
+
+```{r}
+#| label: nastaveni-slovnik
+#| echo: false
+#| message: false
+#| results: asis
+if (knitr::is_html_output()) {
+  glossary::glossary_style(
+    color = "#5D2890",
+    text_decoration = "underline",
+    def_bg = "#FFFFFF",
+    def_color = "#2E2E2E"
+  )
+}
+```
+
+## Mění klima původu tloušťku listů křídlatky?
+
+V předchozích lekcích jsme fitovali `r render_glossary_term("linearni-model", display = "lineární model")` s jedním `r render_glossary_term("prediktor", display = "prediktorem")`. Číselný prediktor popisoval změnu podél gradientu a kategoriální prediktor rozdíl mezi skupinami. Mnohé biologické otázky však potřebují zohlednit několik charakteristik současně.
+
+Budeme sledovat křídlatku japonskou (*Reynoutria japonica*). Rostliny pocházely z populací v původním i zavlečeném areálu a byly pěstovány ve společných zahradách. Ptáme se:
+
+:::: {.box-question title="Otázka lekce"}
+Jak souvisí tloušťka listu s klimatem místa, odkud populace pochází, a co se stane s `r render_glossary_term("odhad", display = "odhadem")`, když do modelu přidáme další související prediktory?
+::::
+
+## Co se v této lekci naučíme
+
+Po této lekci dokážeme:
+
+- zapsat a fitovat `r render_glossary_term("linearni-model", display = "lineární model")` s několika `r render_glossary_term("prediktor", display = "prediktory")`;
+- interpretovat koeficient „při stejných hodnotách ostatních prediktorů“;
+- vysvětlit, proč se `r render_glossary_term("odhad", display = "odhad")` koeficientu po přidání prediktoru změní;
+- rozpoznat `r render_glossary_term("korelace-predikatoru", display = "korelaci prediktorů")` a překrývající se informaci;
+- porovnat skupiny po zohlednění číselného prediktoru;
+- vytvářet predikce jen pro smysluplné kombinace prediktorů;
+- rozlišit `r render_glossary_term("p-hodnota", display = "p-hodnotu")` testu koeficientu od pořadím ovlivněného sekvenčního testu prediktoru.
+
+## Křídlatky z různých částí světa ve společné zahradě
+
+Zdrojová data pocházejí ze studie Cao et al. (2025). Autoři odebrali oddenky populací z Číny, Japonska, Evropy a Severní Ameriky a pěstovali je ve dvou společných zahradách v Číně. V lekci používáme zahradu v Šanghaji.
+
+U každé populace zprůměrujeme tloušťku listů jejích rostlin. Jeden řádek výukové tabulky proto představuje **jednu zdrojovou populaci**, nikoli jednu rostlinu. Klimatické `r render_glossary_term("prediktor", display = "prediktory")` popisují místo původu populace.
+
+Klimatická data pocházejí z otevřeného souboru CHELSA-BIOCLIM 2.1, který shrnuje dlouhodobou teplotu, srážky, sezónnost a klimatické extrémy za období 1981–2010. Zdrojová data mají technické kódy, ale ve výukové tabulce používáme popisné české názvy.
+
+::: {.box-extra title="Doplňující: stažení a příprava dat" collapse="true"}
+
+Pro běžnou práci používáme hotovou lokální tabulku, takže není potřeba internetové připojení. Volitelný postup níže umožňuje celý vznik tabulky zopakovat: stáhne původní znaky z repozitáře Dryad, ověří soubor, získá klimatická data CHELSA a spojí oba zdroje. Jednotlivé rostliny shrneme na úroveň populace, protože klima se mezi rostlinami stejné populace nemění. Pokud automatické stažení z Dryad selže, stáhněte soubor herb-trait.csv ze [stránky datasetu](https://datadryad.org/dataset/doi%3A10.5061/dryad.qbzkh18r4) ručně do složky data-raw; kontrolní součet v kódu ověří správnou verzi.
+
+```{r}
+#| label: extra-priprava
+#| eval: false
+#| code-fold: true
+#| code-summary: "Zobrazit kompletní stažení a přípravu dat"
+install.packages(pkgs = c("digest", "here", "terra"))
+
+# 1. Připravíme adresáře pro stažená a výsledná data
+soubor_znaky <- here::here("data-raw", "herb-trait.csv")
+soubor_vyuka <- here::here("data", "kridlatka_populace.csv")
+
+dir.create(path = dirname(path = soubor_znaky), recursive = TRUE, showWarnings = FALSE)
+dir.create(path = dirname(path = soubor_vyuka), recursive = TRUE, showWarnings = FALSE)
+
+# 2. Stáhneme původní tabulku znaků přímo z Dryad
+url_znaky <- "https://datadryad.org/downloads/file_stream/3893167"
+
+if (!file.exists(soubor_znaky)) {
+  download.file(
+    url = url_znaky,
+    destfile = soubor_znaky,
+    mode = "wb"
+  )
+}
+
+# Kontrolní součet odhalí neúplné nebo později změněné stažení
+sha256_ocekavany <- paste0(
+  "c6a5afae067597870156fc1fe4b8e688",
+  "3784d5eb40f967a2ca95dde6d4fc74a8"
+)
+sha256_stazeny <- digest::digest(
+  object = soubor_znaky,
+  algo = "sha256",
+  file = TRUE
+)
+
+stopifnot(identical(x = sha256_stazeny, y = sha256_ocekavany))
+
+# 3. Načteme tabulku a dáme sloupcům krátké pracovní názvy
+znaky <- read.csv(
+  file = soubor_znaky,
+  check.names = FALSE
+)
+
+names(znaky) <- c(
+  "garden", "range", "population", "individual", "latitude", "longitude",
+  "block", "root_weight_g", "source", "leaf_thickness_mm",
+  "leaf_toughness_n", "leaf_cn", "alkaloids_mg_g", "flavonoids_mg_g",
+  "lignin_mg_g", "herb_beetle_pct", "herb_caterpillar_pct"
+)
+
+# 4. Vybereme šanghajskou zahradu a vytvoříme průměr za populaci
+znaky_shanghai <- znaky[znaky$garden == "SH", ]
+
+populace <- aggregate(
+  x = leaf_thickness_mm ~ population + range + source + latitude + longitude,
+  data = znaky_shanghai,
+  FUN = mean
+)
+
+# 5. Otevřeme osm vrstev CHELSA-BIOCLIM 2.1 (1981–2010)
+vybrane_bioclim <- c(
+  "bio1", "bio4", "bio5", "bio6",
+  "bio12", "bio13", "bio14", "bio15"
+)
+zaklad_klima <- paste0(
+  "https://os.zhdk.cloud.switch.ch/chelsav2/GLOBAL/",
+  "climatologies/1981-2010/bio/"
+)
+Sys.setenv(
+  GDAL_DISABLE_READDIR_ON_OPEN = "YES",
+  CPL_VSIL_CURL_ALLOWED_EXTENSIONS = ".tif"
+)
+adresy_vrstev <- paste0(
+  "/vsicurl/", zaklad_klima, "CHELSA_", vybrane_bioclim,
+  "_1981-2010_V.2.1.tif"
+)
+
+# 6. Z vrstev vyzvedneme klima v souřadnicích každé populace
+body_populaci <- terra::vect(
+  x = populace,
+  geom = c("longitude", "latitude"),
+  crs = "EPSG:4326"
+)
+klima_populaci <- lapply(
+  X = adresy_vrstev,
+  FUN = function(adresa) {
+    vrstva <- terra::rast(x = adresa)
+    terra::extract(x = vrstva, y = body_populaci, ID = FALSE)[[1]]
+  }
+)
+klima_populaci <- as.data.frame(klima_populaci)
+names(klima_populaci) <- vybrane_bioclim
+
+# 7. Spojíme znaky s osmi vybranými BIOCLIM proměnnými
+data_vyuka <- cbind(populace, klima_populaci)
+
+# 8. Použijeme stejné české názvy a kódování původu jako v lekci
+names(data_vyuka) <- c(
+  "populace", "oblast", "puvod", "zemepisna_sirka", "zemepisna_delka",
+  "tloustka_listu_mm", "teplota_rocni_C", "teplota_sezonnost",
+  "teplota_max_C", "teplota_min_C", "srazky_rocni_mm",
+  "srazky_nejvlhci_mesic_mm", "srazky_nejsussi_mesic_mm",
+  "srazky_sezonnost"
+)
+
+data_vyuka$puvod <- ifelse(
+  test = data_vyuka$puvod == "Native",
+  yes = "Puvodni",
+  no = "Zavleceny"
+)
+
+data_vyuka <- data_vyuka[order(data_vyuka$populace), ]
+
+# 9. Před uložením ověříme očekávaný počet a úplnost dat
+stopifnot(
+  nrow(x = data_vyuka) == 128,
+  !anyNA(x = data_vyuka),
+  abs(x = cor(x = data_vyuka$teplota_rocni_C, y = data_vyuka$teplota_max_C) - 0.855) < 0.002
+)
+
+write.csv(
+  x = data_vyuka,
+  file = soubor_vyuka,
+  row.names = FALSE,
+  na = ""
+)
+```
+
+Původní tabulka z Dryad má přibližně 121 kB. Osm vrstev CHELSA-BIOCLIM čteme po malých úsecích přímo ze vzdálených souborů, takže postup vyžaduje internetové připojení a může několik minut běžet. Vrstva má rozlišení 30 úhlových sekund (přibližně 1 km). Studie Cao et al. použila jiný klimatický zdroj; naše výukové hodnoty proto nejsou kopií klimatické tabulky studie.
+
+Zdroj znaků: Cao et al. (2025), Dryad, CC0, DOI [10.5061/dryad.qbzkh18r4](https://doi.org/10.5061/dryad.qbzkh18r4). Klimatické vrstvy: [CHELSA-BIOCLIM 2.1](https://www.chelsa-climate.org/datasets/chelsa_bioclim), období 1981–2010, CC0; Brun et al. (2022), DOI [10.16904/envidat.332](https://doi.org/10.16904/envidat.332).
+
+:::
+
+Připravenou tabulku načteme bez stahování klimatických vrstev:
+
+```{r}
+#| label: nacist-data
+data_kridlatka <- read.csv(
+  file = here::here("data", "kridlatka_populace.csv")
+)
+
+data_kridlatka$puvod <- factor(
+  x = data_kridlatka$puvod,
+  levels = c("Puvodni", "Zavleceny")
+)
+```
+
+Z celé tabulky vybereme sloupce, které budeme opakovaně používat. Souhrn ukáže typické hodnoty, rozsahy a případné chybějící údaje:
+
+```{r}
+#| label: souhrn-dat
+data_kridlatka_pracovni <- data_kridlatka[c(
+  "populace", "puvod", "tloustka_listu_mm",
+  "teplota_rocni_C", "teplota_sezonnost", "teplota_max_C",
+  "teplota_min_C", "srazky_rocni_mm",
+  "srazky_nejvlhci_mesic_mm", "srazky_nejsussi_mesic_mm",
+  "srazky_sezonnost"
+)]
+
+summary(object = data_kridlatka_pracovni)
+```
+
+Význam jednotlivých sloupců je:
+
+| Sloupec | Co obsahuje | Role v analýze |
+|---|---|---|
+| `populace` | identifikátor zdrojové populace | `r render_glossary_term("jednotka-pozorovani", display = "jednotka pozorování")` |
+| `puvod` | původní nebo zavlečený areál | potenciální kategoriální prediktor |
+| `tloustka_listu_mm` | průměrná tloušťka listu v mm | `r render_glossary_term("odezva", display = "odezva")` |
+| `teplota_rocni_C` | průměrná roční teplota v °C | potenciální číselný prediktor |
+| `teplota_sezonnost` | proměnlivost teplot během roku | potenciální číselný prediktor |
+| `teplota_max_C` | maximum teploty nejteplejšího měsíce v °C | potenciální číselný prediktor |
+| `teplota_min_C` | minimum teploty nejchladnějšího měsíce v °C | potenciální číselný prediktor |
+| `srazky_rocni_mm` | roční úhrn srážek v mm | potenciální číselný prediktor |
+| `srazky_nejvlhci_mesic_mm` | srážky nejvlhčího měsíce v mm | potenciální číselný prediktor |
+| `srazky_nejsussi_mesic_mm` | srážky nejsuššího měsíce v mm | potenciální číselný prediktor |
+| `srazky_sezonnost` | proměnlivost srážek během roku | potenciální číselný prediktor |
+
+Funkce `str()` doplní přesné typy hlavních `r render_glossary_term("promenna", display = "proměnných")`. Samostatně spočítáme chybějící hodnoty a zastoupení obou areálů:
+
+```{r}
+#| label: struktura-dat
+str(object = data_kridlatka_pracovni)
+colSums(x = is.na(x = data_kridlatka_pracovni))
+table(data_kridlatka$puvod)
+```
+
+Kontrola potvrzuje `r nrow(x = data_kridlatka)` populačních průměrů, číselné hodnoty očekávaného řádu a žádnou chybějící hodnotu v proměnných hlavních modelů. Rozsahy teplot zároveň vymezují podmínky, pro které jsou predikce podložené daty.
+
+:::: {.box-question title="Co je jednotkou analýzy?"}
+Která `r render_glossary_term("pozorovani", display = "pozorování")` mohou mít stejnou hodnotu klimatického prediktoru: jednotlivé rostliny ze stejné populace, nebo různé zdrojové populace? Proč by analýza všech rostlin jako nezávislých klimatických pozorování nadhodnotila množství informace?
+::::
+
+## Populace z teplejších oblastí mají v `r render_glossary_term("prumer", display = "průměru")` tenčí listy
+
+```{r}
+#| label: graf-rocni-teplota
+#| echo: false
+#| fig-cap: "Průměrná tloušťka listu a průměrná roční teplota místa původu. Jeden bod je jedna populace pěstovaná v Šanghaji."
+ggplot2::ggplot(
+  data = data_kridlatka,
+  ggplot2::aes(x = teplota_rocni_C, y = tloustka_listu_mm)
+) +
+  ggplot2::geom_point(alpha = 0.7, size = 2.2) +
+  ggplot2::labs(
+    x = "Průměrná roční teplota původu (°C)",
+    y = "Průměrná tloušťka listu (mm)"
+  )
+```
+
+:::: {.box-question title="Co dokážeme vyčíst z grafu?"}
+Popište směr a sílu vztahu. Jak těsně body sledují klesající směr a vidíte neobvyklá `r render_glossary_term("pozorovani", display = "pozorování")`?
+::::
+
+Graf naznačuje silný klesající vztah. Z předchozích lekcí známe `r render_glossary_term("korelace", display = "korelaci")`, která jeho směr a těsnost shrne jedním číslem:
+
+```{r}
+#| label: korelace-tloustky-a-teploty
+cor(
+  x = data_kridlatka$teplota_rocni_C,
+  y = data_kridlatka$tloustka_listu_mm
+)
+```
+
+Záporná hodnota potvrzuje klesající směr a její velikost ukazuje těsný vztah. Korelace však nevyjádří změnu tloušťky listu v milimetrech na 1 °C. K tomu použijeme známý `r render_glossary_term("linearni-model", display = "lineární model")`.
+
+## První model používá jednu klimatickou informaci
+
+Roční teplota je v tomto modelu jediným `r render_glossary_term("prediktor", display = "prediktorem")`.
+
+```{r}
+#| label: model-rocni-teplota
+mod_rocni_teplota <- lm(
+  formula = tloustka_listu_mm ~ teplota_rocni_C,
+  data = data_kridlatka
+)
+
+summary(object = mod_rocni_teplota)
+```
+
+:::: {.box-question title="Co už umíme přečíst z výstupu?"}
+Najděte ve výstupu řádek pro průměrnou roční teplotu a odpovězte:
+
+1. Jaké znaménko má `r render_glossary_term("odhad", display = "odhad")` koeficientu?
+2. V jakých jednotkách koeficient interpretujeme?
+3. Jakou změnu tloušťky očekává model při rozdílu 5 °C?
+::::
+
+Koeficient průměrné roční teploty je `r formatC(x = coef(object = mod_rocni_teplota)["teplota_rocni_C"], format = "f", digits = 4)` mm na 1 °C. Záporné znaménko odpovídá klesající přímce v grafu: populace z místa teplejšího o 1 °C má podle modelu v průměru list tenčí přibližně o `r formatC(x = abs(x = coef(object = mod_rocni_teplota)["teplota_rocni_C"]), format = "f", digits = 4)` mm.
+
+Při rozdílu 5 °C model odhaduje změnu
+
+$$
+5 \times (`r formatC(x = coef(object = mod_rocni_teplota)["teplota_rocni_C"], format = "f", digits = 4)`)
+= `r formatC(x = 5 * coef(object = mod_rocni_teplota)["teplota_rocni_C"], format = "f", digits = 3)`\ \mathrm{mm}.
+$$
+
+Tento výpočet porovnává dvě populace lišící se průměrnou roční teplotou původu o 5 °C.
+
+::: {.box-extra title="Doplňující: údaj o popsané variabilitě" collapse="true"}
+
+Ve výstupu `summary()` je také `r render_glossary_term("r2", display = "R²")` = `r formatC(x = summary(object = mod_rocni_teplota)$r.squared, format = "f", digits = 3)`. Tato hodnota říká, že přímka s roční teplotou popisuje přibližně `r round(x = 100 * summary(object = mod_rocni_teplota)$r.squared)` % `r render_glossary_term("variabilita", display = "variability")` populačních průměrů tloušťky. R² samo nerozhoduje, který z několika modelů máme upřednostnit; jeho využití při porovnávání modelů patří do pozdější lekce.
+
+:::
+
+### Odpovídá přímka struktuře `r render_glossary_term("residuum", display = "reziduí")`?
+
+Po interpretaci koeficientu zkontrolujeme, zda v `r render_glossary_term("residuum", display = "reziduích")` nezůstává zřetelné zakřivení nebo změna `r render_glossary_term("rozptyl", display = "rozptylu")`:
+
+```{r}
+#| label: diagnostika-model-rocni-teplota
+plot(x = mod_rocni_teplota, which = 1)
+```
+
+Body by měly být rozptýlené kolem vodorovné nuly bez nápadného oblouku nebo trychtýře. Zde nevidíme výrazný systematický vzor, který by sám o sobě zpochybnil lineární popis.
+
+Na závěr spojíme pozorované populace s trendem, který odhaduje jednoprediktorový model. Přímka ukazuje odhadovanou tloušťku pro jednotlivé roční teploty a šedý pás `r render_glossary_term("nejistota", display = "nejistotu")` průměrného trendu:
+
+```{r}
+#| label: graf-model-rocni-teplota
+#| echo: false
+#| fig-cap: "Pozorované populace a trend odhadnutý modelem s průměrnou roční teplotou."
+ggplot2::ggplot(
+  data = data_kridlatka,
+  mapping = ggplot2::aes(
+    x = teplota_rocni_C,
+    y = tloustka_listu_mm
+  )
+) +
+  ggplot2::geom_point(alpha = 0.65, size = 2.1) +
+  ggplot2::geom_smooth(
+    method = "lm",
+    se = TRUE,
+    color = "#5D2890"
+  ) +
+  ggplot2::labs(
+    x = "Průměrná roční teplota původu (°C)",
+    y = "Průměrná tloušťka listu (mm)"
+  )
+```
+
+## `r render_glossary_term("linearni-model", display = "Lineární model")` může skládat několik příspěvků
+
+První model použil jako jediný `r render_glossary_term("prediktor", display = "prediktor")` průměrnou roční teplotu. V tabulce ale máme také maximum teploty nejteplejšího měsíce. Stejným známým postupem ověříme, jak souvisí s tloušťkou listu samo o sobě:
+
+```{r}
+#| label: model-maximalni-teplota
+mod_max_teplota <- lm(
+  formula = tloustka_listu_mm ~ teplota_max_C,
+  data = data_kridlatka
+)
+
+summary(object = mod_max_teplota)
+```
+
+:::: {.box-question title="Jak číst druhý jednoprediktorový model?"}
+Najděte koeficient maximální teploty. Jaké má znaménko, v jakých jednotkách ho interpretujeme a jak se jeho otázka liší od modelu s průměrnou roční teplotou?
+::::
+
+Model odhaduje změnu `r formatC(x = coef(object = mod_max_teplota)["teplota_max_C"], format = "f", digits = 4)` mm na zvýšení maxima nejteplejšího měsíce o 1 °C. Tento koeficient popisuje celkový vztah k maximální teplotě bez zohlednění průměrné roční teploty.
+
+```{r}
+#| label: graf-model-maximalni-teplota
+#| echo: false
+#| fig-cap: "Pozorované populace a trend odhadnutý modelem s maximem teploty nejteplejšího měsíce."
+ggplot2::ggplot(
+  data = data_kridlatka,
+  mapping = ggplot2::aes(
+    x = teplota_max_C,
+    y = tloustka_listu_mm
+  )
+) +
+  ggplot2::geom_point(alpha = 0.65, size = 2.1) +
+  ggplot2::geom_smooth(
+    method = "lm",
+    se = TRUE,
+    color = "#5D2890"
+  ) +
+  ggplot2::labs(
+    x = "Maximum teploty nejteplejšího měsíce (°C)",
+    y = "Průměrná tloušťka listu (mm)"
+  )
+```
+
+Také u tohoto modelu zkontrolujeme, zda v `r render_glossary_term("residuum", display = "reziduích")` nezůstává nápadné zakřivení nebo změna `r render_glossary_term("rozptyl", display = "rozptylu")`:
+
+```{r}
+#| label: diagnostika-model-maximalni-teplota
+plot(x = mod_max_teplota, which = 1)
+```
+
+Rezidua jsou rozptýlená kolem nuly bez výrazného oblouku; lineární trend je proto pro tento jednoduchý popis přijatelný.
+
+Oba jednoprediktorové modely ukazují klesající klimatický trend, ale každý používá pouze jednu část teplotního režimu a kolem jeho přímky zůstává značná `r render_glossary_term("variabilita", display = "variabilita")`. Chceme proto odhadovat tloušťku listu podle průměrné roční i maximální teploty současně. Ve formuli přidáme druhý prediktor znaménkem `+`:
+
+```{r}
+#| label: model-dve-teploty
+mod_dve_teploty <- lm(
+  formula = tloustka_listu_mm ~ teplota_rocni_C + teplota_max_C,
+  data = data_kridlatka
+)
+
+summary(object = mod_dve_teploty)
+```
+
+Znaménko `+` ve formuli říká, že model odhaduje příspěvek **obou prediktorů současně**. Neznamená, že se dvě naměřené teploty prostě sečtou. Koeficient roční teploty popisuje její vztah k tloušťce při stejném maximu nejteplejšího měsíce; koeficient maxima popisuje jeho vztah při stejné roční teplotě.
+
+:::: {.box-question title="Které tři parametry model odhadl?"}
+Ve výstupu `summary()` najděte tři `r render_glossary_term("parametry-modelu", display = "parametry modelu")`: výchozí hodnotu a oba teplotní koeficienty. Odhadnutý `r render_glossary_term("sklon", display = "sklon")` vyjadřuje změnu `r render_glossary_term("odezva", display = "odezvy")` na jednotku prediktoru. Jak byste každý z nich popsali jednou větou a v jakých jednotkách?
+::::
+
+Textový zápis `r render_glossary_term("odhadnuta-hodnota", display = "odhadnuté hodnoty")` má tři části:
+
+$$
+\begin{aligned}
+\text{odhadnutá tloušťka listu} ={}& \text{výchozí tloušťka} \\
+&+ \text{sklon roční teploty} \times \text{roční teplota} \\
+&+ \text{sklon maxima} \times \text{maximum nejteplejšího měsíce}.
+\end{aligned}
+$$
+
+Konkrétní dosazení ukážeme na 29. řádku výukové tabulky:
+
+```{r}
+#| label: priklad-populace
+bod_priklad <- data_kridlatka[
+  29,
+  c("populace", "teplota_rocni_C", "teplota_max_C")
+]
+
+bod_priklad
+```
+
+Příklad ukazuje skutečnou populaci `r bod_priklad$populace` s průměrnou roční teplotou `r formatC(x = bod_priklad$teplota_rocni_C, format = "f", digits = 2)` °C a maximem nejteplejšího měsíce `r formatC(x = bod_priklad$teplota_max_C, format = "f", digits = 2)` °C. Dosazení odhadnutých parametrů a pozorovaných teplot je
+
+$$
+\begin{aligned}
+\widehat{\text{tloušťka}} &=
+`r formatC(x = coef(object = mod_dve_teploty)["(Intercept)"], format = "f", digits = 4)`
++ (`r formatC(x = coef(object = mod_dve_teploty)["teplota_rocni_C"], format = "f", digits = 4)`)
+\times `r formatC(x = bod_priklad$teplota_rocni_C, format = "f", digits = 2)` \\
+&\quad + (`r formatC(x = coef(object = mod_dve_teploty)["teplota_max_C"], format = "f", digits = 4)`)
+\times `r formatC(x = bod_priklad$teplota_max_C, format = "f", digits = 2)` \\
+&= `r formatC(x = coef(object = mod_dve_teploty)["(Intercept)"], format = "f", digits = 4)`
+`r sprintf(fmt = "%+.4f", coef(object = mod_dve_teploty)["teplota_rocni_C"] * bod_priklad$teplota_rocni_C)`
+`r sprintf(fmt = "%+.4f", coef(object = mod_dve_teploty)["teplota_max_C"] * bod_priklad$teplota_max_C)` \\
+&= `r formatC(x = predict(object = mod_dve_teploty, newdata = bod_priklad), format = "f", digits = 3)`\ \mathrm{mm}.
+\end{aligned}
+$$
+
+Stejnou strukturu zapisujeme pro dva prediktory obecně jako
+
+$$
+Y_i = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \varepsilon_i,
+$$
+
+a pro $p$ prediktorů jako
+
+$$
+Y_i = \beta_0 + \sum_{j=1}^{p}\beta_j X_{ji} + \varepsilon_i.
+$$
+
+$Y_i$ je tloušťka listu populace $i$; $\beta_0$ je výchozí hodnota; $\beta_j$ je koeficient prediktoru $j$; $X_{ji}$ je hodnota prediktoru $j$ u populace $i$; $p$ je počet prediktorů; $j$ označuje konkrétní prediktor a $\varepsilon_i$ odchylku populace od modelu. Každý koeficient má **podmíněný význam**: $\beta_1$ porovnává populace lišící se v $X_1$ při stejných hodnotách ostatních prediktorů.
+
+## Klimatické `r render_glossary_term("promenna", display = "proměnné")` nenesou nezávislé informace
+
+Osm klimatických proměnných ve výukové tabulce popisuje různé části stejného klimatu. Teplé oblasti například často mívají vysokou průměrnou roční teplotu i vysoké maximum nejteplejšího měsíce. `r render_glossary_term("korelace", display = "Korelační")` matice ukáže všechny dvojice současně.
+
+:::: {.box-question title="Které dvojice budou silně souviset?"}
+Před zobrazením matice vyberte dvě klimatické proměnné, u nichž očekáváte silnou kladnou korelaci. Který biologický nebo fyzikální vztah váš odhad podporuje?
+::::
+
+```{r}
+#| label: pripravit-korelacni-matici
+#| echo: false
+klima <- data_kridlatka[c(
+  "teplota_rocni_C", "teplota_sezonnost", "teplota_max_C",
+  "teplota_min_C", "srazky_rocni_mm", "srazky_nejvlhci_mesic_mm",
+  "srazky_nejsussi_mesic_mm", "srazky_sezonnost"
+)]
+# Krátké české názvy zlepší čitelnost matice
+names(klima) <- c(
+  "Roční teplota", "Sezónnost teploty", "Nejteplejší měsíc",
+  "Nejchladnější měsíc", "Roční srážky", "Nejvlhčí měsíc",
+  "Nejsušší měsíc", "Sezónnost srážek"
+)
+# Pearsonova korelace shrnuje směr a sílu každého páru
+matice_korelaci <- cor(x = klima)
+```
+
+::: {.box-extra title="Doplňující: kód pro korelační matici" collapse="true"}
+
+```{r}
+#| label: extra-korelacni-matice
+#| eval: false
+# Vybereme pouze číselné klimatické proměnné
+klima <- data_kridlatka[c(
+  "teplota_rocni_C", "teplota_sezonnost", "teplota_max_C",
+  "teplota_min_C", "srazky_rocni_mm", "srazky_nejvlhci_mesic_mm",
+  "srazky_nejsussi_mesic_mm", "srazky_sezonnost"
+)]
+
+# Krátké české názvy zlepší čitelnost matice
+names(klima) <- c(
+  "Roční teplota", "Sezónnost teploty", "Nejteplejší měsíc",
+  "Nejchladnější měsíc", "Roční srážky", "Nejvlhčí měsíc",
+  "Nejsušší měsíc", "Sezónnost srážek"
+)
+
+# Pearsonova korelace shrnuje směr a sílu každého páru
+matice_korelaci <- cor(x = klima)
+
+# Dolní trojúhelník ukáže koeficienty bez zrcadlového opakování.
+# Ponecháme pořadí proměnných z tabulky; stejné pořadí má matice na snímku.
+# Modrá značí kladnou, bílá nulovou a oranžová zápornou korelaci.
+ggcorrplot::ggcorrplot(
+  corr = matice_korelaci,
+  type = "lower",
+  lab = TRUE,
+  hc.order = FALSE,
+  colors = c("#B4461B", "#FFFFFF", "#007C91"),
+  outline.color = "white"
+)
+```
+
+Kód vybírá osm klimatických sloupců, zkracuje jejich popisky, počítá Pearsonovy korelace a předává výslednou matici funkci `ggcorrplot()`. Proměnné jsou ve stejném pořadí jako v prezentaci; zobrazená je pouze polovina souměrné matice.
+
+:::
+
+```{r}
+#| label: korelace-klimatu
+#| echo: false
+#| fig-width: 9
+#| fig-height: 7.5
+#| fig-cap: "Korelační matice osmi klimatických prediktorů. Čísla jsou Pearsonovy korelační koeficienty."
+ggcorrplot::ggcorrplot(
+  corr = matice_korelaci,
+  type = "lower",
+  lab = TRUE,
+  hc.order = FALSE,
+  colors = c("#B4461B", "#FFFFFF", "#007C91"),
+  outline.color = "white"
+) +
+  ggplot2::labs(
+    title = "Korelace klimatických prediktorů",
+    subtitle = "Modrá = kladná korelace, oranžová = záporná korelace"
+  ) +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+```
+
+Průměrná roční teplota a maximum nejteplejšího měsíce korelují `r round(x = cor(x = data_kridlatka$teplota_rocni_C, y = data_kridlatka$teplota_max_C), 3)`. Obě proměnné proto nesou překrývající se informaci o teplotním režimu populace.
+
+```{r}
+#| label: graf-korelace-teplot
+#| echo: false
+#| fig-cap: "Průměrná roční teplota a maximum nejteplejšího měsíce nesou silně překrývající se informaci."
+ggplot2::ggplot(
+  data = data_kridlatka,
+  mapping = ggplot2::aes(x = teplota_rocni_C, y = teplota_max_C)) +
+  ggplot2::geom_point(alpha = 0.7, size = 2.2, color = "#007C91") +
+  ggplot2::geom_smooth(method = "lm", se = FALSE, color = "#5D2890") +
+  ggplot2::labs(x = "Průměrná roční teplota (°C)", y = "Maximum nejteplejšího měsíce (°C)")
+```
+
+## `r render_glossary_term("porovnani-modelu", display = "Porovnání modelů")`
+
+Jednoprediktorový model shrnuje celkový vztah tloušťky listu k průměrné roční teplotě. Model se dvěma teplotami rozděluje tuto klimatickou informaci mezi dva související `r render_glossary_term("prediktor", display = "prediktory")`. Porovnáním nesoutěžíme o automaticky „lepší“ model; sledujeme, jak přidání překrývající se informace mění otázku, `r render_glossary_term("odhad", display = "odhad")` a jeho `r render_glossary_term("nejistota", display = "nejistotu")`. Oba modely používají stejných `r nrow(x = data_kridlatka)` populací, takže rozdíl nevzniká změnou analyzovaných řádků.
+
+```{r}
+#| label: porovnat-koeficienty-a-chyby
+# Zobrazíme celou tabulku koeficientů každého modelu
+coef(object = summary(object = mod_rocni_teplota))
+coef(object = summary(object = mod_dve_teploty))
+```
+
+V každé tabulce najdeme řádek `teplota_rocni_C`. Sloupec `Estimate` obsahuje odhad koeficientu a sloupec `Std. Error` jeho `r render_glossary_term("standardni-chyba", display = "standardní chybu")`. Nemusíme tedy hodnoty složitě vybírat kódem; pro výukové srovnání je přehlednější číst oba sloupce přímo z úplných tabulek.
+
+V prvním modelu koeficient průměrné roční teploty zahrnuje veškerou informaci, kterou tato proměnná nese o společném teplotním gradientu. Po přidání maxima nejteplejšího měsíce se ptáme na užší vztah: jak se liší tloušťka mezi populacemi se stejným maximem, ale odlišnou průměrnou roční teplotou.
+
+Odhad se proto změní z `r formatC(x = coef(object = mod_rocni_teplota)["teplota_rocni_C"], format = "f", digits = 5)` na `r formatC(x = coef(object = mod_dve_teploty)["teplota_rocni_C"], format = "f", digits = 5)` mm na 1 °C. `r render_glossary_term("standardni-chyba", display = "Standardní chyba")` současně vzroste z `r formatC(x = coef(object = summary(object = mod_rocni_teplota))["teplota_rocni_C", "Std. Error"], format = "f", digits = 5)` na `r formatC(x = coef(object = summary(object = mod_dve_teploty))["teplota_rocni_C", "Std. Error"], format = "f", digits = 5)`. Korelované prediktory poskytují málo populací, které se výrazně liší v jedné teplotě při téměř stejné druhé teplotě. Samostatné koeficienty se proto oddělují s větší nejistotou, přestože model lze bez problému fitovat.
+
+::: {.box-extra title="Doplňující: porovnání není výběr nejlepšího modelu" collapse="true"}
+
+Zde porovnáváme koeficienty, protože chceme pochopit, jak přidání souvisejícího prediktoru změnilo statistickou otázku. O výběru modelu ale nerozhodujeme. V dalších lekcích budeme pracovat s principem úspornosti: mezi biologicky smysluplnými modely budeme hledat takový, který popisuje data dostatečně dobře bez zbytečné složitosti. K tomu nestačí vybrat model s nejvyšším `r render_glossary_term("r2", display = "R²")`.
+
+:::
+
+:::: {.box-question title="Jakou otázku zodpovídá koeficient roční teploty?"}
+Porovnává dvě populace se stejným maximem nejteplejšího měsíce, které se liší průměrnou roční teplotou. Najděte v `r render_glossary_term("bodovy-graf", display = "bodovém grafu")` oblast, kde data takové srovnání skutečně podporují.
+::::
+
+### Změnil druhý prediktor také strukturu `r render_glossary_term("residuum", display = "reziduí")`?
+
+Stejnou `r render_glossary_term("diagnostika-modelu", display = "diagnostiku")` použijeme u obou modelů. Každý graf vytvoříme samostatně, aby jeho kód neměnil nastavení dalších grafů.
+
+```{r}
+#| label: diagnostika-model-rocni-teplota-porovnani
+#| fig-cap: "Rezidua modelu pouze s průměrnou roční teplotou."
+plot(x = mod_rocni_teplota, which = 1)
+```
+
+```{r}
+#| label: diagnostika-model-dve-teploty
+#| fig-cap: "Rezidua modelu s průměrnou roční a maximální teplotou."
+plot(x = mod_dve_teploty, which = 1)
+```
+
+V obou grafech hledáme zakřivení nebo systematickou změnu `r render_glossary_term("rozptyl", display = "rozptylu")`. Přidání druhé teploty mírně mění odhady, ale nevytváří nový výrazný vzor reziduí. Porovnání koeficientů proto interpretujeme jako změnu podmíněné otázky a její nejistoty, nikoli jako opravu zjevně nevyhovujícího prvního modelu.
+
+## Původ populací mění příběh vztahu
+
+Jeden `r render_glossary_term("linearni-model", display = "lineární model")` může obsahovat několik číselných `r render_glossary_term("prediktor", display = "prediktorů")`, několik kategoriálních prediktorů nebo jejich kombinaci. Typ prediktoru nemění základní princip: znaménkem `+` přidáváme do stejného modelu další informaci.
+
+Rozlišíme pozorované populace podle původu, zatím bez modelových přímek:
+
+```{r}
+#| label: graf-puvod-pozorovana-data
+#| echo: false
+#| fig-cap: "Pozorované populace rozlišené podle původního a zavlečeného areálu. Jeden bod je jedna zdrojová populace."
+ggplot2::ggplot(
+  data = data_kridlatka,
+  mapping = ggplot2::aes(
+    x = teplota_rocni_C,
+    y = tloustka_listu_mm,
+    color = puvod
+  )
+) +
+  ggplot2::geom_point(alpha = 0.8, size = 2.3) +
+  ggplot2::scale_color_manual(
+    values = barvy_puvodu,
+    labels = popisky_puvodu
+  ) +
+  ggplot2::labs(
+    x = "Průměrná roční teplota původu (°C)",
+    y = "Průměrná tloušťka listu (mm)",
+    color = "Původ"
+  )
+```
+
+:::: {.box-question title="Jak se liší obě skupiny?"}
+Ve kterých teplotách pozorujeme původní a zavlečené populace? Která skupina má při podobné teplotě výše položené body? Je klesající vztah stejně zřetelný uvnitř obou skupin jako v celém souboru?
+::::
+
+Původní populace pocházejí převážně z teplejších míst a současně mají tenčí listy. Celkový vztah napříč všemi populacemi proto spojuje rozdíl mezi skupinami se vztahy uvnitř skupin. K roční teplotě přidáme kategoriální prediktor původu:
+
+```{r}
+#| label: model-puvod-a-teplota
+mod_puvod <- lm(
+  formula = tloustka_listu_mm ~ puvod + teplota_rocni_C,
+  data = data_kridlatka
+)
+
+summary(object = mod_puvod)
+```
+
+:::: {.box-question title="Jak číst model s teplotou a původem?"}
+Která skupina je ve výstupu referenční? Najděte společný `r render_glossary_term("sklon", display = "sklon")` roční teploty a posun zavlečených populací vůči původním. Jak byste oba koeficienty popsali v biologických jednotkách?
+::::
+
+Znaménko `+` vytváří aditivní model. Koeficient původu posouvá jednu skupinu vůči druhé, zatímco koeficient roční teploty určuje společný sklon obou skupin.
+
+```{r}
+#| label: predikce-aditivniho-modelu
+#| echo: false
+teploty_puvodni <- range(
+  data_kridlatka$teplota_rocni_C[data_kridlatka$puvod == "Puvodni"]
+)
+teploty_zavlecene <- range(
+  data_kridlatka$teplota_rocni_C[data_kridlatka$puvod == "Zavleceny"]
+)
+
+predikce_puvodni <- data.frame(
+  puvod = factor(
+    x = "Puvodni",
+    levels = levels(x = data_kridlatka$puvod)
+  ),
+  teplota_rocni_C = seq(
+    from = teploty_puvodni[1],
+    to = teploty_puvodni[2],
+    length.out = 100
+  )
+)
+
+predikce_zavlecene <- data.frame(
+  puvod = factor(
+    x = "Zavleceny",
+    levels = levels(x = data_kridlatka$puvod)
+  ),
+  teplota_rocni_C = seq(
+    from = teploty_zavlecene[1],
+    to = teploty_zavlecene[2],
+    length.out = 100
+  )
+)
+
+predikce_puvod <- rbind(predikce_puvodni, predikce_zavlecene)
+predikce_puvod$odhad <- predict(
+  object = mod_puvod,
+  newdata = predikce_puvod
+)
+```
+
+```{r}
+#| label: graf-puvod
+#| echo: false
+#| fig-cap: "Body jsou pozorované populace. Rovnoběžné přímky jsou odhady aditivního modelu se společným sklonem roční teploty a rozdílnou výchozí úrovní původu."
+ggplot2::ggplot(
+  data = data_kridlatka,
+  ggplot2::aes(x = teplota_rocni_C, y = tloustka_listu_mm, color = puvod)
+) +
+  ggplot2::geom_point(alpha = 0.8, size = 2.3) +
+  ggplot2::geom_line(
+    data = predikce_puvod,
+    ggplot2::aes(y = odhad),
+    linewidth = 1.1
+  ) +
+  ggplot2::scale_color_manual(values = barvy_puvodu, labels = popisky_puvodu) +
+  ggplot2::labs(
+    x = "Průměrná roční teplota původu (°C)",
+    y = "Průměrná tloušťka listu (mm)",
+    color = "Původ"
+  )
+```
+
+Rovnoběžné přímky zobrazují aditivní model: při každé teplotě je modelový rozdíl mezi skupinami stejný a obě skupiny mají společný sklon.
+
+::: {.box-extra title="Doplňující: co kdyby skupiny neměly společný sklon?" collapse="true"}
+
+Graf může vyvolat otázku, zda se vztah mezi roční teplotou a tloušťkou listu liší podle původu populace. Takovou otázku řeší `r render_glossary_term("interakce-predikatoru", display = "interakce prediktorů")`: dovolila by každé skupině jiný sklon, takže přímky by nemusely být rovnoběžné. Interakce patří do následující lekce; zde ji nefitujeme ani neinterpretujeme.
+
+```{r}
+#| label: schema-aditivni-interakce
+#| echo: false
+#| fig-cap: "Schematické porovnání. Aditivní model vyžaduje společný sklon; interakce by umožnila rozdílné sklony skupin."
+schema_vztahu <- data.frame(
+  model = rep(x = c("Aditivní model", "Model s interakcí"), each = 4),
+  puvod = rep(x = c("Zavlečený", "Zavlečený", "Původní", "Původní"), times = 2),
+  teplota = rep(x = c(0, 1, 0, 1), times = 2),
+  tloustka = c(0.35, 0.65, 0.60, 0.90, 0.35, 0.55, 0.60, 1.05)
+)
+
+ggplot2::ggplot(
+  data = schema_vztahu,
+  mapping = ggplot2::aes(
+    x = teplota,
+    y = tloustka,
+    color = puvod,
+    group = puvod
+  )
+) +
+  ggplot2::geom_line(linewidth = 1.2) +
+  ggplot2::facet_wrap(facets = ~ model) +
+  ggplot2::scale_color_manual(values = c("#007C91", "#B4461B")) +
+  ggplot2::labs(
+    x = "Teplota (schematicky)",
+    y = "Tloušťka listu (schematicky)",
+    color = "Původ"
+  ) +
+  ggplot2::theme(
+    axis.text = ggplot2::element_blank(),
+    axis.ticks = ggplot2::element_blank()
+  )
+```
+
+Levý panel ukazuje předpoklad našeho aditivního modelu. Pravý panel není výsledek další analýzy; pouze ukazuje tvar, který by model s interakcí mohl povolit.
+
+:::
+
+### Kontrola modelu s teplotou a původem
+
+```{r}
+#| label: diagnostika-model-puvod
+plot(x = mod_puvod, which = 1)
+```
+
+V grafu hledáme zakřivení nebo změnu `r render_glossary_term("rozptyl", display = "rozptylu")` `r render_glossary_term("residuum", display = "reziduí")`. `r render_glossary_term("diagnostika-modelu", display = "Diagnostický graf")` zde neukazuje důvod měnit předem zvolenou strukturu modelu.
+
+::: {.box-extra title="Doplňující: které populace mají na model velký vliv?" collapse="true"}
+
+Cookova vzdálenost doplňuje kontrolu reziduí o otázku, zda některá populace výrazně ovlivňuje odhadnuté koeficienty:
+
+```{r}
+#| label: extra-cookova-vzdalenost
+plot(x = mod_puvod, which = 4)
+```
+
+Označená populace není automaticky chybná a nemažeme ji pouze kvůli vysoké hodnotě. Ověříme její zdrojová data a zkoumáme, proč má na model velký vliv.
+
+:::
+
+Po přidání původu se koeficient roční teploty změní z `r formatC(x = coef(object = mod_rocni_teplota)["teplota_rocni_C"], format = "f", digits = 5)` na `r formatC(x = coef(object = mod_puvod)["teplota_rocni_C"], format = "f", digits = 5)` mm na 1 °C. První model popisuje celkový vztah napříč oblastmi. Druhý porovnává populace stejného statusu původu. Ani jeden koeficient není „ten jediný pravý“; odpovídají na jiné otázky.
+
+## Jak model odhadne tloušťku při stejné teplotě
+
+Model použijeme k výpočtu dvou **`r render_glossary_term("odhad", display = "bodových odhadů")`**: odhadnuté průměrné tloušťky původních a zavlečených populací při stejné roční teplotě. Bodové odhady udávají dvě modelové hodnoty, ale samy nevyjadřují jejich `r render_glossary_term("nejistota", display = "nejistotu")`.
+
+Původní areál je referenční skupina. Pro smysluplné porovnání potřebujeme teplotu, při které máme data z obou areálů. Rozdělíme populace podle původu, vypočítáme rozsah teplot v každé skupině a zobrazíme jejich společnou část:
+
+```{r}
+#| label: spolecny-rozsah-pro-srovnani-puvodu
+data_puvodni <- data_kridlatka[
+  data_kridlatka$puvod == "Puvodni",
+]
+data_zavlecene <- data_kridlatka[
+  data_kridlatka$puvod == "Zavleceny",
+]
+
+rozsah_puvodni <- range(x = data_puvodni$teplota_rocni_C)
+rozsah_zavleceny <- range(x = data_zavlecene$teplota_rocni_C)
+
+dolni_spolecna <- max(rozsah_puvodni[1], rozsah_zavleceny[1])
+horni_spolecna <- min(rozsah_puvodni[2], rozsah_zavleceny[2])
+
+c(dolni_spolecna, horni_spolecna)
+```
+
+Společný rozsah je přibližně `r round(x = dolni_spolecna, digits = 1)` až `r round(x = horni_spolecna, digits = 1)` °C. Zvolíme hodnotu uvnitř tohoto intervalu:
+
+```{r}
+#| label: zvolit-teplotu-pro-porovnani
+teplota_pro_porovnani <- 14
+teplota_pro_porovnani
+```
+
+Vytvoříme dva řádky, které se liší pouze původem. Jde o modelové scénáře při stejné roční teplotě, nikoli o nové naměřené populace:
+
+```{r}
+#| label: pripravit-scenare-puvodu
+scenare_modelu <- data.frame(
+  puvod = factor(
+    x = c("Puvodni", "Zavleceny"),
+    levels = levels(x = data_kridlatka$puvod)
+  ),
+  teplota_rocni_C = c(
+    teplota_pro_porovnani,
+    teplota_pro_porovnani
+  )
+)
+
+scenare_modelu
+```
+
+Model skládá `r render_glossary_term("odhadnuta-hodnota", display = "odhadnutou tloušťku")` ze tří snadno pojmenovatelných částí:
+
+$$
+\text{odhadnutá tloušťka} = \text{výchozí tloušťka původní populace}
++ \text{příspěvek zavlečeného areálu} + \text{příspěvek roční teploty}.
+$$
+
+U původní populace je skupinový příspěvek nulový, protože jde o referenční skupinu. Plně rozepsané dosazení pro první řádek a následné vyčíslení jednotlivých příspěvků je
+
+$$
+\begin{aligned}
+`r formatC(x = coef(object = mod_puvod)["(Intercept)"], format = "f", digits = 4)`
++ 0
++ (`r formatC(x = coef(object = mod_puvod)["teplota_rocni_C"], format = "f", digits = 5)`) \times `r teplota_pro_porovnani`
+&= `r formatC(x = coef(object = mod_puvod)["(Intercept)"], format = "f", digits = 4)`
++ 0
++ (`r formatC(x = coef(object = mod_puvod)["teplota_rocni_C"] * teplota_pro_porovnani, format = "f", digits = 4)`) \\
+&= `r formatC(x = coef(object = mod_puvod)["(Intercept)"] + coef(object = mod_puvod)["teplota_rocni_C"] * teplota_pro_porovnani, format = "f", digits = 3)`\ \mathrm{mm}.
+\end{aligned}
+$$
+
+U zavlečené populace se přidá koeficient `puvodZavleceny`:
+
+$$
+\begin{aligned}
+`r formatC(x = coef(object = mod_puvod)["(Intercept)"], format = "f", digits = 4)`
++ (`r formatC(x = coef(object = mod_puvod)["puvodZavleceny"], format = "f", digits = 4)`)
++ (`r formatC(x = coef(object = mod_puvod)["teplota_rocni_C"], format = "f", digits = 5)`) \times `r teplota_pro_porovnani`
+&= `r formatC(x = coef(object = mod_puvod)["(Intercept)"], format = "f", digits = 4)`
++ (`r formatC(x = coef(object = mod_puvod)["puvodZavleceny"], format = "f", digits = 4)`)
++ (`r formatC(x = coef(object = mod_puvod)["teplota_rocni_C"] * teplota_pro_porovnani, format = "f", digits = 4)`) \\
+&= `r formatC(x = coef(object = mod_puvod)["(Intercept)"] + coef(object = mod_puvod)["puvodZavleceny"] + coef(object = mod_puvod)["teplota_rocni_C"] * teplota_pro_porovnani, format = "f", digits = 3)`\ \mathrm{mm}.
+\end{aligned}
+$$
+
+Ruční výpočet zkontrolujeme funkcí `predict()`. Výsledky přidáme do stejné dvouřádkové tabulky:
+
+```{r}
+#| label: predikovat-scenare-puvodu
+scenare_modelu$odhad_mm <- predict(
+  object = mod_puvod,
+  newdata = scenare_modelu
+)
+
+scenare_modelu
+```
+
+Rozdíl obou odhadů při stejné teplotě je `r formatC(x = scenare_modelu$odhad_mm[2] - scenare_modelu$odhad_mm[1], format = "f", digits = 3)` mm. Je přesně roven koeficientu `puvodZavleceny`, protože ostatní části rovnice jsou v obou scénářích stejné.
+
+Tabulka obsahuje dva bodové odhady, ale neukazuje, s jakou přesností je model určil. K vyjádření přesnosti potřebujeme `r render_glossary_term("interval-spolehlivosti", display = "intervaly spolehlivosti")`.
+
+Abstraktní zápis pro původní populaci je
+
+$$
+\widehat{Y}_i = \hat\beta_0 + \hat\beta_1 X_i,
+$$
+
+zatímco pro zavlečenou populaci přidáme skupinový koeficient:
+
+$$
+\widehat{Y}_i = \hat\beta_0 + \hat\beta_{\mathrm{zavlečený}} + \hat\beta_1 X_i.
+$$
+
+$\widehat{Y}_i$ je predikovaná tloušťka populace $i$, $X_i$ její průměrná roční teplota, $\hat\beta_0$ výchozí hodnota původní skupiny, $\hat\beta_{\mathrm{zavlečený}}$ rozdíl zavlečené skupiny při stejné teplotě a $\hat\beta_1$ změna s průměrnou roční teplotou při stejném původu.
+
+{{< pagebreak >}}
+
+## Stejné porovnání doplníme o nejistotu
+
+V předchozí části jsme při `r teplota_pro_porovnani` °C získali jeden `r render_glossary_term("odhad", display = "bodový odhad")` pro původní a jeden pro zavlečené populace. K oběma doplníme `r render_glossary_term("nejistota", display = "nejistotu")`. Pro pochopení, proč potřebujeme modelové odhady při stejné teplotě, je porovnáme s prostými `r render_glossary_term("prumer", display = "průměry")` naměřené tloušťky. Každou skupinu vybereme přímo a její průměr vypočítáme zvlášť:
+
+```{r}
+#| label: proste-prumery-puvodu
+prumer_puvodni <- mean(
+  x = data_kridlatka$tloustka_listu_mm[
+    data_kridlatka$puvod == "Puvodni"
+  ]
+)
+prumer_puvodni
+
+prumer_zavleceny <- mean(
+  x = data_kridlatka$tloustka_listu_mm[
+    data_kridlatka$puvod == "Zavleceny"
+  ]
+)
+prumer_zavleceny
+```
+
+Tyto dva průměry popisují skutečně pozorované skupiny. Skupiny se však liší také rozložením ročních teplot: původní populace pocházejí převážně z teplejších míst. Rozdíl prostých průměrů proto spojuje rozdíl původu s rozdílem klimatu. Pokud chceme interpretovat koeficient původu v aditivním modelu, musíme skupiny porovnat při stejné roční teplotě.
+
+V předchozí části jsme pro obě skupiny vypočítali společný teplotní rozsah a zvolili `r teplota_pro_porovnani` °C uvnitř tohoto překryvu. Porovnání tak leží v oblasti podložené `r render_glossary_term("pozorovani", display = "pozorováními")` původních i zavlečených populací.
+
+Funkci `emmeans()` známe ze srovnání kategorií. Zde jí navíc řekneme, při které hodnotě číselného `r render_glossary_term("prediktor", display = "prediktoru")` má skupiny porovnat. Vrátí stejné bodové odhady, které jsme ručně sestavili a ověřili funkcí `predict()`, a navíc jejich nejistotu:
+
+```{r}
+#| label: emmeans-puvod
+modelove_prumery <- emmeans::emmeans(
+  object = mod_puvod,
+  specs = ~ puvod,
+  at = list(teplota_rocni_C = teplota_pro_porovnani)
+)
+
+modelove_prumery
+```
+
+Modelové průměry se od prostých průměrů liší, protože nyní držíme roční teplotu stejnou. Sloupce `lower.CL` a `upper.CL` jsou meze 95% `r render_glossary_term("interval-spolehlivosti", display = "intervalu spolehlivosti")` pro **průměrnou modelovou hodnotu**, nikoli pro nový jednotlivý populační průměr.
+
+V grafu jsou tyto dva modelové průměry zvýrazněné na rovnoběžných přímkách. Svislé úsečky zobrazují jejich intervaly spolehlivosti:
+
+```{r}
+#| label: graf-modelovych-prumeru
+#| echo: false
+#| fig-cap: "Modelové průměry původních a zavlečených populací při stejné roční teplotě. Svislé úsečky jsou 95% intervaly spolehlivosti."
+data_modelove_prumery <- as.data.frame(modelove_prumery)
+
+ggplot2::ggplot(
+  data = data_kridlatka,
+  mapping = ggplot2::aes(
+    x = teplota_rocni_C,
+    y = tloustka_listu_mm,
+    color = puvod
+  )
+) +
+  ggplot2::geom_point(alpha = 0.45, size = 1.8) +
+  ggplot2::geom_line(
+    data = predikce_puvod,
+    mapping = ggplot2::aes(y = odhad),
+    linewidth = 1
+  ) +
+  ggplot2::geom_vline(
+    xintercept = teplota_pro_porovnani,
+    linetype = "dashed",
+    color = "grey45"
+  ) +
+  ggplot2::geom_errorbar(
+    data = data_modelove_prumery,
+    mapping = ggplot2::aes(
+      x = teplota_pro_porovnani,
+      y = emmean,
+      ymin = lower.CL,
+      ymax = upper.CL
+    ),
+    width = 0.25,
+    linewidth = 1.1
+  ) +
+  ggplot2::geom_point(
+    data = data_modelove_prumery,
+    mapping = ggplot2::aes(
+      x = teplota_pro_porovnani,
+      y = emmean
+    ),
+    size = 4.5,
+    shape = 21,
+    fill = "white",
+    stroke = 1.3
+  ) +
+  ggplot2::scale_color_manual(
+    values = barvy_puvodu,
+    labels = popisky_puvodu
+  ) +
+  ggplot2::labs(
+    x = "Průměrná roční teplota původu (°C)",
+    y = "Průměrná tloušťka listu (mm)",
+    color = "Původ"
+  )
+```
+
+::: {.box-extra title="Doplňující: jak bezpečně predikovat z více prediktorů" collapse="true"}
+
+```{r}
+#| label: extra-predikce
+nova_data <- data.frame(
+  puvod = factor(
+    x = c("Zavleceny", "Puvodni"),
+    levels = levels(x = data_kridlatka$puvod)
+  ),
+  teplota_rocni_C = c(14, 14)
+)
+
+predict(object = mod_puvod, newdata = nova_data, interval = "confidence")
+```
+
+
+
+Datový rámec `newdata` musí obsahovat každý `r render_glossary_term("prediktor", display = "prediktor")` modelu, stejné názvy, jednotky a úrovně faktorů. U modelu se dvěma teplotami navíc nestačí, aby byla každá hodnota samostatně v pozorovaném rozsahu. Jejich **kombinace** musí odpovídat reálnému klimatu.
+
+:::: {.box-warning title="Predikce není stavebnice libovolných hodnot"}
+Kombinace velmi nízké roční teploty a velmi vysokého maxima nejteplejšího měsíce může ležet mimo společný mrak dat. Model číslo vypočítá, ale data takovou klimatickou situaci nemusí podporovat.
+::::
+
+```{r}
+#| label: extra-predikce-podpora
+#| echo: false
+#| fig-cap: "Podporovaný scénář leží uvnitř společného mraku obou teplot; nepodporovaný scénář skládá dvě jednotlivě možné, ale společně nepozorované hodnoty."
+scenare_klima <- data.frame(
+  teplota_rocni_C = c(14, 7),
+  teplota_max_C = c(29, 33),
+  podpora = c("Podporovaný", "Nepodporovaný")
+)
+
+cbind(
+  scenare_klima,
+  predict(object = mod_dve_teploty, newdata = scenare_klima, interval = "confidence")
+)
+
+ggplot2::ggplot(
+  data = data_kridlatka,
+  ggplot2::aes(x = teplota_rocni_C, y = teplota_max_C)
+) +
+  ggplot2::geom_point(color = "grey65", alpha = 0.65) +
+  ggplot2::geom_point(
+    data = scenare_klima,
+    ggplot2::aes(color = podpora),
+    size = 4
+  ) +
+  ggplot2::scale_color_manual(values = c(
+    "Podporovaný" = "#007C91",
+    "Nepodporovaný" = "#B4461B"
+  )) +
+  ggplot2::labs(
+    x = "Průměrná roční teplota (°C)",
+    y = "Maximum nejteplejšího měsíce (°C)",
+    color = "Scénář"
+  )
+```
+
+Oba řádky mají interval spolehlivosti pro modelový průměr. Model vypočítá i nepodporovaný oranžový bod, protože jeho dvě hodnoty jsou číselně platné. V datech však taková kombinace prakticky chybí, takže její věcná opora je slabá; interval z `predict()` tuto chybějící klimatickou analogii sám nevaruje.
+
+:::
+
+## Záleží u testu na pořadí `r render_glossary_term("prediktor", display = "prediktorů")`?
+
+V předchozích lekcích jsme testovali, zda je koeficient slučitelný s nulou, a funkcí `anova()` jsme pokládali celkovou otázku o rozdílech mezi skupinami. U modelu s několika prediktory musíme rozlišit **test koeficientu** a **sekvenční test prediktoru**. Oba mohou uvádět `r render_glossary_term("p-hodnota", display = "p-hodnotu")`, ale odpovídají na jinak formulované otázky.
+
+Vytvoříme druhý zápis stejného modelu. Obsahuje stejné dva prediktory a liší se pouze jejich pořadím ve formuli:
+
+```{r}
+#| label: model-dve-teploty-opacne-poradi
+# Stejné prediktory zapíšeme v opačném pořadí
+mod_dve_teploty_opacne <- lm(
+  formula = tloustka_listu_mm ~ teplota_max_C + teplota_rocni_C,
+  data = data_kridlatka
+)
+```
+
+### Co se změní v tabulce koeficientů?
+
+Tabulka `summary()` testuje u každého koeficientu `r render_glossary_term("nulova-hypoteza", display = "nulovou hypotézu")`, že je při zohlednění ostatních prediktorů roven nule. V obou zápisech porovnáme `r render_glossary_term("odhad", display = "odhady")`, `r render_glossary_term("standardni-chyba", display = "standardní chyby")`, t-statistiky a p-hodnoty:
+
+```{r}
+#| label: porovnat-testy-koeficientu-pri-zmene-poradi
+coef(object = summary(object = mod_dve_teploty))
+coef(object = summary(object = mod_dve_teploty_opacne))
+```
+
+:::: {.box-question title="Co se po obrácení pořadí nezměnilo?"}
+Porovnejte řádky `teplota_rocni_C` a `teplota_max_C` v obou tabulkách. Zůstaly stejné sloupce `Estimate`, `Std. Error`, `t value` a `Pr(>|t|)`?
+::::
+
+Změnilo se pouze pořadí řádků. Oba zápisy mají stejné koeficienty a stejné testy koeficientů, protože každý koeficient stále popisuje vztah při stejné hodnotě druhého prediktoru. Stejné jsou také `r render_glossary_term("odhadnuta-hodnota", display = "odhadnuté hodnoty")` a `r render_glossary_term("residuum", display = "residua")`:
+
+```{r}
+#| label: overit-shodu-modelu-pri-zmene-poradi
+all.equal(
+  target = fitted(object = mod_dve_teploty),
+  current = fitted(object = mod_dve_teploty_opacne)
+)
+
+all.equal(
+  target = residuals(object = mod_dve_teploty),
+  current = residuals(object = mod_dve_teploty_opacne)
+)
+```
+
+Výsledek `TRUE` potvrzuje, že jde o tentýž fitovaný model. Nemusíme proto opakovat `r render_glossary_term("diagnostika-modelu", display = "diagnostiku")` reziduí.
+
+### Sekvenční `r render_glossary_term("anova", display = "analýza rozptylu")` klade otázky zleva doprava
+
+Základní `anova()` v R používá **sekvenční testy**. První řádek se ptá, kolik `r render_glossary_term("variabilita", display = "variability")` popíše první prediktor oproti modelu bez klimatického prediktoru. Druhý řádek se ptá, kolik další informace přidá druhý prediktor po zohlednění prvního.
+
+:::: {.box-question title="Co očekáváte od dvou tabulek?"}
+Klimatické prediktory jsou silně `r render_glossary_term("korelace-predikatoru", display = "korelované")`. Který prediktor převezme jejich společnou informaci, když jej zapíšeme jako první?
+::::
+
+```{r}
+#| label: porovnat-sekvencni-testy
+# Roční teplota vstupuje do sekvenčního testu jako první
+anova(object = mod_dve_teploty)
+
+# Maximální teplota vstupuje do sekvenčního testu jako první
+anova(object = mod_dve_teploty_opacne)
+```
+
+Když je první roční teplota, její řádek převezme také velkou část informace sdílené s maximální teplotou. Řádek maxima nejteplejšího měsíce zachycuje pouze to, co maximum přidá nad rámec roční teploty. Při opačném pořadí převezme sdílenou část maximum a řádek roční teploty zachycuje její dodatečný příspěvek.
+
+```{r}
+#| label: pripravit-hodnoty-sekvencnich-testu
+#| echo: false
+#| output: false
+data_anova_rocni_prvni <- anova(object = mod_dve_teploty)
+data_anova_max_prvni <- anova(object = mod_dve_teploty_opacne)
+```
+
+Rozdíl je v tabulkách konkrétní. P-hodnota sekvenčního testu roční teploty je při jejím prvním místě `r format.pval(pv = data_anova_rocni_prvni["teplota_rocni_C", "Pr(>F)"], digits = 3, eps = 1e-16)`, ale po předchozím zohlednění maximální teploty `r format.pval(pv = data_anova_max_prvni["teplota_rocni_C", "Pr(>F)"], digits = 3, eps = 1e-16)`. U maximální teploty se p-hodnota změní z `r format.pval(pv = data_anova_max_prvni["teplota_max_C", "Pr(>F)"], digits = 3, eps = 1e-16)` při prvním místě na `r format.pval(pv = data_anova_rocni_prvni["teplota_max_C", "Pr(>F)"], digits = 3, eps = 1e-16)` po zohlednění roční teploty.
+
+Proto se mezi tabulkami mění sekvenční součty čtverců, `r render_glossary_term("f-statistika", display = "F-statistiky")` a p-hodnoty. Nemění se však data ani fitovaný model. P-hodnota koeficientu v `summary()` odpovídá podmíněné otázce „přidává tento prediktor informaci při zahrnutí druhého prediktoru?“; v tomto modelu s jedním `r render_glossary_term("stupne-volnosti", display = "stupněm volnosti")` na prediktor se proto shoduje se sekvenčním testem daného prediktoru tehdy, když je zapsán jako druhý.
+
+Z předchozích lekcí známe obecný význam vysvětlené a nevysvětlené variability, součtů čtverců a F-statistiky. Zde je používáme k pochopení důsledku pořadí prediktorů. K podrobnějšímu rozdělení sdílené variability mezi několik prediktorů a k dalším způsobům testování modelových členů se vrátíme v dalších lekcích.
+
+:::: {.box-warning title="Co je hlavní zpráva?"}
+Pořadí prediktorů ve formuli mění **p-hodnoty sekvenčních testů z `anova()`**, ale nemění p-hodnoty koeficientů v `summary()`. Přesouvání prediktorů ve formuli proto není způsob, jak vybrat vhodné prediktory nebo získat příznivější výsledek.
+::::
+
+:::: {.box-extra title="Doplňující: testy nezávislé na pořadí prediktorů" collapse="true"}
+
+Pokud chceme každý prediktor testovat po zohlednění všech ostatních prediktorů v aditivním modelu, můžeme použít testy typu II z funkce `car::Anova()`. Na rozdíl od sekvenčních testů z `anova()` nepřidělují sdílenou informaci podle pořadí členů ve formuli.
+
+```{r}
+#| label: extra-porovnat-testy-typu-ii
+# Každý prediktor testujeme po zohlednění druhého prediktoru
+car::Anova(
+  mod = mod_dve_teploty,
+  type = 2
+)
+
+# Obrácení pořadí ve formuli odpověď nezmění
+car::Anova(
+  mod = mod_dve_teploty_opacne,
+  type = 2
+)
+```
+
+Řádky se v tabulkách objeví v pořadí podle formule, ale součet čtverců, F-statistika a p-hodnota každého prediktoru zůstávají stejné. V tomto aditivním modelu má každý číselný prediktor jeden stupeň volnosti, takže jeho test typu II odpovídá testu příslušného koeficientu v `summary()`; platí $F = t^2$.
+
+Testy typu II jsou vhodné pro náš aditivní model bez `r render_glossary_term("interakce-predikatoru", display = "interakce")`. U modelů s interakcemi je nejprve potřeba přesně určit věcnou hypotézu; automatická volba typu testu ji nenahradí.
+
+::::
+
+### Výběr prediktorů patří do dalších lekcí
+
+Výběr prediktorů budeme formulovat jako `r render_glossary_term("porovnani-modelu", display = "porovnání předem smysluplných kandidátních modelů")`. V příštích lekcích využijeme princip úspornosti a také `r render_glossary_term("aic", display = "AIC")`, které zohledňuje shodu modelu s daty i počet jeho parametrů. Takový postup poskytuje pro výběr modelu lepší oporu než měnění pořadí prediktorů nebo hledání nejmenší p-hodnoty.
+
+## Jak postupovat u modelu s více `r render_glossary_term("prediktor", display = "prediktory")`
+
+1. Začněte biologickou otázkou a určete `r render_glossary_term("jednotka-pozorovani", display = "jednotku pozorování")`.
+2. Prohlédněte vztah `r render_glossary_term("odezva", display = "odezvy")` ke každému prediktoru i vztahy mezi prediktory.
+3. Porovnávané modely fitujte na stejných řádcích.
+4. Přeložte každý koeficient do věty „při stejných hodnotách ostatních prediktorů“.
+5. Porovnejte `r render_glossary_term("odhad", display = "odhady")` i jejich `r render_glossary_term("nejistota", display = "nejistotu")`, nejen `r render_glossary_term("p-hodnota", display = "p-hodnoty")`.
+6. Rozlište test koeficientu od sekvenčního testu a u sekvenčního testu zdůvodněte pořadí prediktorů.
+7. Predikujte pouze pro podporované kombinace hodnot.
+8. Zkontrolujte `r render_glossary_term("residuum", display = "rezidua")` a vlivná `r render_glossary_term("pozorovani", display = "pozorování")`; nemažte je automaticky.
+
+Tento postup není jednorázový seznam na konci analýzy. U každého nového modelu se vracíme k interpretaci koeficientů, kontrole reziduí a vlivných pozorování, jak jsme ukázali u modelů výše.
+
+## Společná zahrada neznamená náhodně přiřazené klima
+
+Společná zahrada omezuje rozdíly v aktuálním prostředí, v němž byly listy změřeny. Neznamená však, že klima původu bylo náhodně přiřazeno. Původní a zavlečené populace mají odlišnou geografickou i evoluční historii. Naše jednoduché modely proto popisují asociace v těchto `r nrow(x = data_kridlatka)` populacích; samy nedokazují klimatickou adaptaci ani přímý příčinný účinek teploty.
+
+{{< pagebreak >}}
+
+## Co si odnést
+
+- Koeficient ve víceprediktorovém modelu je podmíněný na ostatní `r render_glossary_term("prediktor", display = "prediktory")` v rovnici.
+- Přidání prediktoru může výrazně změnit velikost i směr vztahu, protože model odpovídá na novou otázku.
+- `r render_glossary_term("korelace-predikatoru", display = "Korelované klimatické prediktory")` ztěžují oddělení jejich samostatných příspěvků a mohou zvětšit `r render_glossary_term("nejistota", display = "nejistotu")`.
+- Pořadí prediktorů mění `r render_glossary_term("p-hodnota", display = "p-hodnoty")` sekvenčních testů z `anova()`, nikoli p-hodnoty koeficientů v `summary()`.
+- Predikce z víceprediktorového modelu potřebuje úplné a společně realistické kombinace hodnot.

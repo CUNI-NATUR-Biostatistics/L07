@@ -1,0 +1,2479 @@
+---
+format:
+  revealjs:
+    slide-number: true
+    theme: [default, ../theme/presentation_theme.scss, ../theme/presentation_components.scss]
+    embed-resources: true
+    preview-links: false
+    output-file: "presentation"
+    output-ext: "html"
+    highlight-style: github-light
+    include-in-header: "../theme/fonts-include.html"
+filters:
+  - ../theme/rn-shorthand.lua
+  - ../_extensions/EmilHvitfeldt/roughnotation/rough.lua
+---
+
+```{r}
+#| label: setup
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+options(htmltools.dir.version = FALSE)
+
+knitr::opts_chunk$set(
+  fig.width = 10,
+  fig.height = 5.6,
+  fig.align = "center",
+  out.width = "100%",
+  warning = FALSE,
+  message = FALSE
+)
+
+here::i_am(path = "Presentation/presentation.qmd")
+
+source(
+  file = here::here("R", "set_r_theme.R")
+)
+
+source(
+  file = here::here("R", "format_value_cz.R")
+)
+
+# Preserve native colour emoji in axis titles; showtext has no colour-emoji
+# fallback and otherwise replaces the variable icons with missing-glyph boxes.
+showtext::showtext_auto(enable = FALSE)
+
+path_materials <- "Presentation/Materials"
+
+include_local_figure <- function(data_source) {
+  return(
+    knitr::include_graphics(
+      path = here::here(path_materials, data_source),
+      error = TRUE
+    )
+  )
+}
+
+# Group colours deliberately use the separate categorical palette from the
+# brand guide so they cannot be confused with data, model, or interpretation.
+vec_cols_origin <- c(
+  "Původní" = "#4E9A8A",
+  "Zavlečené" = "#C2613A"
+)
+
+theme_l07 <-
+  theme_biostat(base_size = 19) +
+  ggplot2::theme(
+    text = ggplot2::element_text(family = ""),
+    plot.title = ggplot2::element_text(
+      color = biostat_cols[["graphite"]],
+      family = "",
+      face = "bold"
+    ),
+    axis.title = ggplot2::element_text(
+      color = biostat_cols[["graphite"]],
+      family = ""
+    ),
+    panel.grid.minor = ggplot2::element_blank(),
+    legend.position = "bottom"
+  )
+```
+
+```{r}
+#| label: dynamic-link-generation
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+project_name <-
+  basename(path = here::here())
+
+display_name <-
+  stringr::str_glue("Biostatistika - {project_name}")
+
+github_url <-
+  stringr::str_glue(
+    "https://github.com/CUNI-NATUR-Biostatistics/{project_name}"
+  )
+
+slides_url <-
+  stringr::str_glue(
+    "https://CUNI-NATUR-Biostatistics.github.io/{project_name}/"
+  )
+```
+
+## Mění klima původu tloušťku listů křídlatky? {.course-title .bg-indigo}
+
+::: {.course-title-mark}
+![Logo kurzu Biostatistika](../theme/course-logo-reversed.svg) BIOSTATISTIKA
+:::
+
+::: {.course-title-number}
+L07
+:::
+
+::: {.course-title-formal}
+Více prediktorů: aditivní model a korelace prediktorů
+:::
+
+::: {.course-title-link}
+[cuni-natur-biostatistics.github.io/materialy.html](https://cuni-natur-biostatistics.github.io/materialy.html)
+:::
+
+## Mění klima původu tloušťku listů křídlatky?
+
+<br>
+
+::: columns
+::: {.column width="39%"}
+[Která klimatická stopa nese vlastní informaci?]{.text-size-heading .text-bold .text-color-indigo_velvet}
+
+<br>
+
+::: {.incremental}
+
+- Průměrná teplota?
+- Nejteplejší měsíc?
+- Původ populace?
+
+:::
+
+:::
+::: {.column width="61%"}
+```{r}
+#| label: zobrazit-klimatickeho-detektiva
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| out-width: "100%"
+#| fig-alt: "Křídlatka jako klimatický detektiv zkoumá slunce, déšť, teploměr a mapu původu."
+include_local_figure(
+  data_source = "kridlatka_klimaticky_detektiv.png"
+)
+```
+
+[Ilustrační obraz vytvořen AI.]{.footer}
+:::
+:::
+
+::: {.notes}
+Nejprve položte biologickou otázku. Název metody zatím není odpověď.
+:::
+
+{{< include ../pollslive/generated/active.qmd >}}
+
+## Výsledky učení
+
+Po lekci dokážete:
+
+::: incremental
+- [interpretovat regresní koeficient]{.text-hgl-indigo_velvet} při zohlednění dalších prediktorů;
+- rozpoznat [korelované prediktory]{.text-hgl-orange} a jejich vliv na nejistotu;
+- vytvořit predikci pro [kombinaci hodnot zastoupenou v datech]{.text-hgl-indigo_velvet};
+- odlišit test koeficientu od [sekvenčního testu]{.text-hgl-orange} v `anova()`;
+- formulovat biologický závěr bez neoprávněné kauzality.
+:::
+
+## Co už umíme s jedním prediktorem?
+
+<br>
+
+::: columns
+::: {.column width="48%" .fragment}
+### Číselný prediktor
+
+$$
+\text{odezva} = \beta_0 + \beta_1 x + \varepsilon
+$$
+
+- sklon v biologických jednotkách
+- interval spolehlivosti
+- rezidua
+:::
+::: {.column width="48%" .fragment}
+### Kategoriální prediktor
+
+- referenční skupina
+- rozdíl mezi skupinami
+- koeficientový a modelový test
+:::
+:::
+
+::: {.takeaway-strip .fragment}
+Dnes se nebudeme učit „další vzorec“. Novinka je [jiná otázka]{.text-hgl-orange}.
+:::
+
+## Křídlatky z různých částí světa
+
+```{r}
+#| label: data-kridlatka
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_kridlatka <-
+  readr::read_csv(
+    file = here::here("data", "kridlatka_populace.csv"),
+    show_col_types = FALSE
+  ) |>
+  dplyr::mutate(
+    puvod = factor(
+      x = puvod,
+      levels = c("Puvodni", "Zavleceny"),
+      labels = c("Původní", "Zavlečené")
+    )
+  )
+```
+
+::: {.takeaway-strip .text-center}
+🌍 [`r nrow(data_kridlatka)` populací z různých míst]{.text-hgl-graphite} → 🪴 [stejná zahrada v Šanghaji]{.text-hgl-indigo_velvet} → 🌿 [průměrná tloušťka listu]{.text-hgl-orange}
+:::
+
+::: columns
+::: {.column width="48%"}
+```{r}
+#| label: zobrazit-fotografii-kridlatky
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| out-width: "100%"
+#| fig-alt: "Mladé výhony křídlatky japonské s typickými listy a červenavými stonky."
+include_local_figure(
+  data_source = "kridlatka_japonska_cc0.jpg"
+)
+```
+:::
+::: {.column width="48%"}
+```{r}
+#| label: zobrazit-spolecne-zahrady
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| out-width: "50%"
+#| fig-alt: "Letecké fotografie společných zahrad v Šanghaji a Xishuangbanně s pravidelnými řadami květináčů."
+include_local_figure(
+  data_source = "spolecne_zahrady_cao_2025_ccby.jpg"
+)
+```
+:::
+:::
+
+[Křídlatka: Jasper Shide / [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Reynoutria_japonica_-_Japanese_Knotweed.jpg), CC0. Zahrady: obr. 1b z [Cao et al. (2025)](https://doi.org/10.1111/ecog.07569), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).]{.footer}
+
+## Co je jednotka analýzy?
+
+<br>
+
+[Klima se liší mezi zdrojovými populacemi. Co je tedy jednou nezávislou informací?]{.text-size-heading .text-bold .text-color-indigo_velvet}
+
+<br>
+<br>
+
+::: columns
+::: {.column width="48%" .fragment}
+::: {.card-question}
+[A]{.card-title}
+Jeden změřený list nebo jedna rostlina
+:::
+:::
+::: {.column width="48%" .fragment}
+::: {.card-question .rn-circle-orange}
+[B]{.card-title}
+Průměr jedné zdrojové populace
+:::
+:::
+:::
+
+::: {.notes}
+Nechte dvojice hlasovat a zdůvodnit, kde se mění klimatický prediktor.
+:::
+
+## Jeden bod představuje jednu zdrojovou populaci
+
+<br>
+
+::: columns
+::: {.column width="56%"}
+[`r nrow(data_kridlatka)`]{.text-size-heading .text-bold .text-color-indigo_velvet} populačních průměrů (řádků)
+
+<br>
+
+::: {.fragment}
+Jednotlivé rostliny poskytly měření, ale [klima původu je společné celé populaci]{.text-hgl-orange}.
+:::
+:::
+
+::: {.column width="40%" .fragment}
+| Úroveň | Role |
+|---|---|
+| rostlina | měření listů |
+| populace | řádek analýzy |
+| zahrada | společné aktuální prostředí |
+:::
+:::
+
+[Klima původu: [CHELSA-BIOCLIM 2.1](https://www.chelsa-climate.org/datasets/chelsa_bioclim), 1981–2010, [Brun et al. (2022)](https://doi.org/10.16904/envidat.332), CC0.]{.footer}
+
+## Populace z teplejších oblastí mají v průměru tenčí listy
+
+```{r}
+#| label: pripravit-graf-rocni
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+p_rocni <-
+  ggplot2::ggplot(
+    data = data_kridlatka,
+    mapping = ggplot2::aes(
+      x = teplota_rocni_C,
+      y = tloustka_listu_mm
+    )
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["grey_olive"]],
+    alpha = 0.72,
+    size = 2.8
+  ) +
+  ggplot2::labs(
+    x = "🌡️ Průměrná teplota původu (°C)",
+    y = "🌿 Tloušťka listu (mm)"
+  ) +
+  theme_l07
+```
+
+```{r}
+#| label: zobrazit-graf-rocni
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Bodový graf tloušťky listů proti průměrné teplotě původu ukazuje klesající vztah."
+p_rocni
+```
+
+## Co dokážeme vyčíst z grafu?
+
+<br>
+
+::: columns
+::: {.column width="60%"}
+```{r}
+#| label: zopakovat-graf-rocni
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Bodový graf ukazuje, že populace z teplejších oblastí původu mívají tenčí listy."
+p_rocni
+```
+:::
+::: {.column width="39%"}
+[Ve dvojici popište:]{.text-size-heading .text-bold .text-color-indigo_velvet}
+
+1. směr vztahu;
+2. jeho těsnost;
+3. neobvyklé body;
+4. jedno tvrzení, které graf **zatím nepodporuje**.
+:::
+:::
+
+::: {.notes}
+Think-pair-share. Poslední bod má připravit rozdíl mezi asociací a příčinou.
+:::
+
+## Průměrná teplota má záporný sklon
+
+<br>
+
+```{r}
+#| label: model-rocni
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+mod_rocni_teplota <-
+  lm(
+    formula = tloustka_listu_mm ~ teplota_rocni_C,
+    data = data_kridlatka
+  )
+coef_rocni_tidy <- broom::tidy(mod_rocni_teplota)
+odhad_rocni <- setNames(coef_rocni_tidy$estimate, coef_rocni_tidy$term)
+
+zmena_teploty_C <- 5
+
+p_rocni_model <-
+  p_rocni +
+  ggplot2::geom_smooth(
+    method = "lm",
+    formula = y ~ x,
+    se = TRUE,
+    color = biostat_cols[["indigo_velvet"]],
+    fill = scales::alpha(
+      colour = biostat_cols[["indigo_velvet"]],
+      alpha = 0.15
+    ),
+    linewidth = 1.4
+  )
+```
+
+::: columns
+::: {.column width="60%"}
+```{r}
+#| label: zobrazit-model-rocni
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Bodový graf s regresní přímkou ukazuje záporný sklon vztahu mezi průměrnou teplotou a tloušťkou listů."
+p_rocni_model
+```
+:::
+
+::: {.column width="3%"}
+:::
+
+::: {.column width="35%" .fragment}
+[`r format_value_cz(odhad_rocni[["teplota_rocni_C"]], digits = 5)`]{.text-size-heading .text-bold .text-color-indigo_velvet} mm na 1 °C
+
+<br>
+
+::: {.fragment}
+O `r zmena_teploty_C` °C teplejší původ odpovídá podle modelu přibližně o [`r format_value_cz(abs(odhad_rocni[["teplota_rocni_C"]] * zmena_teploty_C), digits = 3)` mm tenčímu listu]{.text-hgl-orange}.
+:::
+
+:::
+:::
+
+## Odpovídá přímka struktuře reziduí?
+
+```{r}
+#| label: pripravit-rezidua
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_rezidua <-
+  tibble::tibble(
+    odhad = fitted(object = mod_rocni_teplota),
+    reziduum = residuals(object = mod_rocni_teplota)
+  )
+
+p_fitted_rezidua <-
+  ggplot2::ggplot(
+    data = data_rezidua,
+    mapping = ggplot2::aes(
+      x = odhad,
+      y = reziduum
+    )
+  ) +
+  ggplot2::geom_hline(
+    yintercept = 0,
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["grey_olive"]],
+    alpha = 0.72,
+    size = 2.8
+  ) +
+  ggplot2::labs(
+    x = "Odhadnutá tloušťka (mm)",
+    y = "Reziduum (mm)"
+  ) +
+  theme_l07
+
+
+p_rezidua <-
+  ggplot2::ggplot(
+    data = data_rezidua,
+    mapping = ggplot2::aes(
+      x = reziduum
+    )
+  ) +
+  ggplot2::geom_histogram(
+    bins = 12,
+    color = biostat_cols[["white"]],
+    fill = biostat_cols[["grey_olive"]]
+  ) +
+  ggplot2::labs(
+    x = "Reziduum (mm)",
+    y = "Frekvence"
+  ) +
+  theme_l07
+```
+
+
+:::: {.columns}
+
+::: {.column width="48%"}
+```{r}
+#| label: zobrazit-fitted-rezidua
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Graf reziduí proti odhadnutým hodnotám neukazuje výrazný systematický vzorec."
+p_fitted_rezidua
+```
+:::
+
+::: {.column width="48%"}
+
+```{r}
+#| label: zobrazit-rezidua
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Histogram reziduí ukazuje, že většina reziduí je kolem nuly a jejich rozložení je přibližně symetrické."
+p_rezidua
+```
+:::
+
+::::
+
+::: {.takeaway-strip .fragment}
+Hledáme náhodný mrak kolem nuly — ne oblouk, trychtýř ani samostatné pásy.
+:::
+
+## Také nejteplejší měsíc souvisí s tloušťkou listu
+
+```{r}
+#| label: model-maximum
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+mod_max_teplota <-
+  lm(
+    formula = tloustka_listu_mm ~ teplota_max_C,
+    data = data_kridlatka
+  )
+coef_max_tidy <- broom::tidy(mod_max_teplota)
+odhad_max <- setNames(coef_max_tidy$estimate, coef_max_tidy$term)
+
+p_max <-
+  ggplot2::ggplot(
+    data = data_kridlatka,
+    mapping = ggplot2::aes(
+      x = teplota_max_C,
+      y = tloustka_listu_mm
+    )
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["grey_olive"]],
+    alpha = 0.72,
+    size = 2.8
+  ) +
+  ggplot2::geom_smooth(
+    method = "lm",
+    formula = y ~ x,
+    se = TRUE,
+    color = biostat_cols[["indigo_velvet"]],
+    fill = scales::alpha(
+      colour = biostat_cols[["indigo_velvet"]],
+      alpha = 0.15
+    ),
+    linewidth = 1.4
+  ) +
+  ggplot2::labs(
+    x = "☀️ Maximum nejteplejšího měsíce (°C)",
+    y = "🌿 Tloušťka listu (mm)"
+  ) +
+  theme_l07
+```
+
+::: columns
+::: {.column width="65%"}
+```{r}
+#| label: zobrazit-model-maximum
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Bodový graf ukazuje záporný vztah mezi maximální teplotou nejteplejšího měsíce a tloušťkou listů."
+p_max
+```
+:::
+::: {.column width="31%"}
+
+[Stejná odezva]{.text-hgl-graphite}
+
+🌿 Tloušťka listu
+
+<br>
+
+[Jiná osa x]{.text-hgl-orange}
+
+☀️ Maximum nejteplejšího měsíce
+
+<br>
+
+::: {.fragment}
+[`r format_value_cz(odhad_max[["teplota_max_C"]], digits = 5)`]{.text-size-heading .text-bold .text-color-indigo_velvet} mm na 1 °C maxima
+:::
+:::
+:::
+
+# Dva prediktory
+
+## Co ukáže model s oběma teplotami? {.text-center .bg-amethyst}
+
+::: {.layout-stack .layout-center-y .text-center}
+::: {.text-size-heading .text-bold .text-color-white}
+[průměrná teplota]{.text-hgl-orange} nebo [maximum]{.text-hgl-orange}?
+:::
+
+<br>
+
+[Oba samostatné vztahy jsou záporné.]{.text-size-large .text-color-white}
+
+::: {.fragment .strip-orange .text-color-graphite}
+Samostatné modely nerozliší vlastní informaci prediktoru od informace sdílené s druhou teplotou.
+:::
+:::
+
+## Jeden model může použít obě teploty
+
+<br>
+
+```{r}
+#| label: model-dve-teploty
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+mod_dve_teploty <-
+  lm(
+    formula = tloustka_listu_mm ~ teplota_rocni_C + teplota_max_C,
+    data = data_kridlatka
+  )
+coef_dve_teploty_tidy <- broom::tidy(mod_dve_teploty)
+odhad_dve_teploty <- setNames(coef_dve_teploty_tidy$estimate, coef_dve_teploty_tidy$term)
+```
+
+```r
+mod_dve_teploty <- lm(
+  formula = tloustka_listu_mm ~
+    teplota_rocni_C + teplota_max_C,
+  data = data_kridlatka
+)
+```
+
+<br>
+
+::: {.takeaway-strip .fragment}
+odhad tloušťky = [intercept]{.text-hgl-graphite} + [příspěvek průměrné teploty]{.text-hgl-indigo_velvet} + [příspěvek maxima]{.text-hgl-orange}
+:::
+
+## Co znamená znaménko `+` ve formuli?
+
+
+<br>
+<br>
+
+::: columns
+::: {.column width="52%"}
+::: {.panel-question}
+**A)** Sečteme naměřené teploty.
+:::
+
+::: {.panel-question .rn-circle-orange}
+**B)** Oba prediktory vstupují do jednoho modelu.
+:::
+
+::: {.panel-question}
+**C)** Oba koeficienty musí být kladné.
+:::
+
+:::
+::: {.column width="46%"}
+```{r}
+#| label: zobrazit-dve-teploty-jeden-model
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| out-width: "100%"
+#| fig-alt: "Dva teploměry vstupují společně do jednoho fialového modelu."
+include_local_figure(
+  data_source = "dve_teploty_jeden_model.png"
+)
+```
+
+[Ilustrační obraz vytvořen AI.]{.footer}
+:::
+:::
+
+<br>
+
+::: {.fragment}
+Znaménko určuje [složení modelu]{.text-hgl-indigo_velvet}, ne sčítání jednotek ani směr efektu.
+:::
+
+## Každý sklon drží druhou teplotu stejnou
+
+<br>
+
+::: columns
+::: {.column width="48%"}
+::: {.card-indigo}
+[Průměrná teplota]{.card-title}
+Při stejné maximální teplotě:
+
+**`r format_value_cz(odhad_dve_teploty[["teplota_rocni_C"]], digits = 5)` mm / °C**
+:::
+:::
+::: {.column width="48%"}
+::: {.card-amethyst}
+[Maximální teplota]{.card-title}
+Při stejné průměrné teplotě:
+
+**`r format_value_cz(odhad_dve_teploty[["teplota_max_C"]], digits = 5)` mm / °C**
+:::
+:::
+:::
+
+<br>
+
+::: {.takeaway-strip .fragment}
+[„Při stejné hodnotě ostatních prediktorů“]{.text-hgl-indigo_velvet} je součást významu koeficientu.
+:::
+
+## Jak model odhadne jednu populaci?
+
+```{r}
+#| label: pripravit-priklad-populace
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_populace_priklad <-
+  data_kridlatka |>
+  dplyr::filter(populace == "CN35")
+
+odhad_populace_priklad <-
+  predict(
+    object = mod_dve_teploty,
+    newdata = data_populace_priklad
+  ) |>
+  unname()
+```
+
+Skutečná populace **`r data_populace_priklad$populace`**: průměrná teplota `r format_value_cz(data_populace_priklad$teplota_rocni_C, digits = 2)` °C; maximum `r format_value_cz(data_populace_priklad$teplota_max_C, digits = 2)` °C.
+
+<br>
+
+:::: {.columns}
+
+::: {.column width="48%"}
+
+::: {.text-size-smaller}
+```{r}
+#| label: zobrazit-tabulku-koeficientu-dvou-teplot
+#| echo: false
+#| message: false
+#| warning: false
+
+nazvy_dvou_teplot <- c(
+  "(Intercept)" = "intercept (mm)",
+  "teplota_rocni_C" = "průměrná teplota (mm / °C)",
+  "teplota_max_C" = "maximum (mm / °C)"
+)
+
+stopifnot(
+  setequal(coef_dve_teploty_tidy$term, names(nazvy_dvou_teplot)),
+  isTRUE(all.equal(
+    setNames(coef_dve_teploty_tidy$estimate, coef_dve_teploty_tidy$term)[names(coef(mod_dve_teploty))],
+    coef(mod_dve_teploty),
+    check.attributes = FALSE
+  ))
+)
+
+tabulka_dvou_teplot <- coef_dve_teploty_tidy |>
+  dplyr::transmute(
+    Parametr = unname(nazvy_dvou_teplot[term]),
+    Odhad = dplyr::if_else(
+      term == "(Intercept)",
+      format_value_cz(estimate, digits = 4),
+      format_value_cz(estimate, digits = 6)
+    )
+  )
+
+tinytable::tt(tabulka_dvou_teplot)
+```
+:::
+
+:::
+
+::: {.column width="48%" .incremental .fragment}
+
+$$`r format_value_cz(odhad_dve_teploty[["(Intercept)"]], digits = 4, math = TRUE)`$$
+$$+\,(`r format_value_cz(odhad_dve_teploty[["teplota_rocni_C"]], digits = 6, math = TRUE)`)\times `r format_value_cz(data_populace_priklad$teplota_rocni_C, digits = 2, math = TRUE)`$$
+$$+\,(`r format_value_cz(odhad_dve_teploty[["teplota_max_C"]], digits = 6, math = TRUE)`)\times `r format_value_cz(data_populace_priklad$teplota_max_C, digits = 2, math = TRUE)`$$
+$$= \mathbf{`r format_value_cz(odhad_populace_priklad, digits = 3, math = TRUE)`}\ \text{mm}$$
+
+:::
+
+::::
+
+## Model skládá odhad ze tří příspěvků
+
+::: {.text-size-large .text-color-indigo_velvet}
+$$
+\begin{aligned}
+\widehat{\text{tloušťka}}
+&= \text{intercept}
++ \text{příspěvek průměrné teploty}\\
+&\quad + \text{příspěvek maxima}
+\end{aligned}
+$$
+:::
+
+<br>
+
+::: {.columns .fragment}
+::: {.column width="31%"}
+::: {.panel-data}
+$\hat\beta_0$
+
+intercept modelu
+:::
+:::
+::: {.column width="31%"}
+::: {.panel-result}
+$\hat\beta_1 x_1$
+
+první příspěvek
+:::
+:::
+::: {.column width="31%"}
+::: {.panel-result}
+$\hat\beta_2 x_2$
+
+druhý příspěvek
+:::
+:::
+:::
+
+<br>
+
+::: {.fragment .text-size-large .text-color-indigo_velvet}
+$$
+\widehat{y} = \hat\beta_0 + \hat\beta_1 x_1 + \hat\beta_2 x_2
+$$
+:::
+
+# Korelace prediktorů
+
+## Které klimatické dvojice budou silně souviset?
+
+<br>
+
+[Vyberte dvě dvojice. Proč by spolu měly souviset?]{.text-size-heading .text-bold .text-color-indigo_velvet}
+
+<br>
+
+
+::: {.columns .fragment}
+::: {.column width="48%"}
+::: {.panel-question}
+🌡️ průměrná teplota ↔ ☀️ maximum
+:::
+
+::: {.panel-question}
+🌡️ průměrná teplota ↔ ❄️ minimum
+:::
+:::
+::: {.column width="48%"}
+::: {.panel-question}
+🌧️ roční srážky ↔ ☔ nejvlhčí měsíc
+:::
+
+::: {.panel-question}
+🌡️ teplota ↔ 🌧️ srážky
+:::
+:::
+:::
+
+::: {.notes}
+Skupiny nejprve predikují. Matici ukažte až po formulaci důvodů.
+:::
+
+## Osm proměnných popisuje společné klima
+
+```{r}
+#| label: pripravit-korelace
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+vec_promenne_klima <-
+  c(
+    "teplota_rocni_C",
+    "teplota_sezonnost",
+    "teplota_max_C",
+    "teplota_min_C",
+    "srazky_rocni_mm",
+    "srazky_nejvlhci_mesic_mm",
+    "srazky_nejsussi_mesic_mm",
+    "srazky_sezonnost"
+  )
+
+vec_zkratky <-
+  c(
+    "T prům.",
+    "T sez.",
+    "T max",
+    "T min",
+    "Srážky",
+    "Srážky max",
+    "Srážky min",
+    "Srážky sez."
+  )
+
+matice_korelaci <-
+  data_kridlatka |>
+  dplyr::select(dplyr::all_of(x = vec_promenne_klima)) |>
+  cor()
+
+data_korelace <-
+  matice_korelaci |>
+  tibble::as_tibble(rownames = "promenna_1") |>
+  tidyr::pivot_longer(
+    cols = -promenna_1,
+    names_to = "promenna_2",
+    values_to = "korelace"
+  ) |>
+  dplyr::mutate(
+    promenna_1 = factor(
+      x = promenna_1,
+      levels = vec_promenne_klima,
+      labels = vec_zkratky
+    ),
+    promenna_2 = factor(
+      x = promenna_2,
+      levels = vec_promenne_klima,
+      labels = vec_zkratky
+    ),
+    dulezita =
+      (promenna_1 == "T prům." & promenna_2 == "T max") |
+      (promenna_1 == "T max" & promenna_2 == "T prům.")
+  )
+
+p_korelace <-
+  ggplot2::ggplot(
+    data = data_korelace,
+    mapping = ggplot2::aes(
+      x = promenna_1,
+      y = promenna_2,
+      fill = korelace
+    )
+  ) +
+  ggplot2::geom_tile(color = biostat_cols[["white"]]) +
+  ggplot2::geom_tile(
+    data = dplyr::filter(
+      .data = data_korelace,
+      dulezita
+    ),
+    fill = NA,
+    color = biostat_cols[["graphite"]],
+    linewidth = 1.8
+  ) +
+    ggplot2::geom_text(
+    data = data_korelace,
+    mapping = ggplot2::aes(
+      label = sprintf(fmt = "%.2f", korelace)
+    ),
+    color = biostat_cols[["graphite"]],
+    size = 4
+  ) +
+  ggplot2::geom_text(
+    data = dplyr::filter(
+      .data = data_korelace,
+      dulezita | promenna_1 == promenna_2
+    ),
+    mapping = ggplot2::aes(
+      label = sprintf(fmt = "%.2f", korelace)
+    ),
+    size = 4
+  ) +
+  ggplot2::scale_fill_gradient2(
+    low = biostat_cols[["grey_olive"]],
+    mid = biostat_cols[["white"]],
+    high = biostat_cols[["amethyst"]],
+    midpoint = 0,
+    limits = c(-1, 1),
+    name = "r"
+  ) +
+  ggplot2::labs(
+    x = NULL,
+    y = NULL
+  ) +
+  theme_biostat(base_size = 14) +
+  ggplot2::theme(
+    text = ggplot2::element_text(family = ""),
+    axis.text.x = ggplot2::element_text(
+      angle = 40,
+      hjust = 1
+    ),
+    panel.grid = ggplot2::element_blank(),
+    legend.position = "right"
+  )
+```
+
+```{r}
+#| label: zobrazit-korelace
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Korelační matice osmi klimatických proměnných zvýrazňuje silnou korelaci průměrné a maximální teploty."
+#| fig.height: 6.2
+p_korelace
+```
+
+::: {.takeaway-strip .fragment}
+Čtěte: **pozice buňky → znaménko → velikost → biologický smysl**.
+:::
+
+## Průměrná a maximální teplota se mění společně (r = `r format_value_cz(matice_korelaci["teplota_rocni_C", "teplota_max_C"], digits = 3)`)
+
+```{r}
+#| label: pripravit-graf-teplot
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+p_teploty <-
+  ggplot2::ggplot(
+    data = data_kridlatka,
+    mapping = ggplot2::aes(
+      x = teplota_rocni_C,
+      y = teplota_max_C
+    )
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["grey_olive"]],
+    alpha = 0.72,
+    size = 2.8
+  ) +
+  ggplot2::labs(
+    x = "🌡️ Průměrná teplota (°C)",
+    y = "☀️ Maximum nejteplejšího měsíce (°C)"
+  ) +
+  theme_l07
+```
+
+```{r}
+#| label: zobrazit-graf-teplot
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Bodový graf ukazuje, že průměrná a maximální teplota zdrojových lokalit se mění společně."
+p_teploty
+```
+
+::: {.takeaway-strip .fragment}
+
+Hledejte body se [skoro stejnou maximální teplotou]{.text-hgl-graphite}, ale [rozdílnou průměrnou teplotou]{.text-hgl-indigo_velvet}.
+:::
+
+## Překrývající se informace zvětšuje nejistotu
+
+<br>
+
+```{r}
+#| label: pripravit-porovnani-nejistoty
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_porovnani <-
+  dplyr::bind_rows(
+    broom::tidy(mod_rocni_teplota) |>
+      dplyr::filter(term == "teplota_rocni_C") |>
+      dplyr::mutate(model = "Jen průměrná teplota"),
+    broom::tidy(mod_dve_teploty) |>
+      dplyr::filter(term == "teplota_rocni_C") |>
+      dplyr::mutate(model = "Obě teploty")
+  ) |>
+  dplyr::transmute(
+    model = factor(
+      x = model,
+      levels = c("Jen průměrná teplota", "Obě teploty")
+    ),
+    odhad = estimate,
+    se = std.error
+  )
+
+uroven_spolehlivosti <- 0.95
+
+kriticka_hodnota <-
+  qnorm(
+    p = 1 - (1 - uroven_spolehlivosti) / 2
+  )
+
+p_porovnani <-
+  ggplot2::ggplot(
+    data = data_porovnani,
+    mapping = ggplot2::aes(
+      x = model,
+      y = odhad
+    )
+  ) +
+  ggplot2::geom_hline(
+    yintercept = 0,
+    color = biostat_cols[["grey_olive"]]
+  ) +
+  ggplot2::geom_errorbar(
+    mapping = ggplot2::aes(
+      ymin = odhad - kriticka_hodnota * se,
+      ymax = odhad + kriticka_hodnota * se
+    ),
+    color = biostat_cols[["orange"]],
+    linewidth = 1.5,
+    width = 0.12
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["indigo_velvet"]],
+    size = 5
+  ) +
+  ggplot2::labs(
+    x = NULL,
+    y = "🌡️ Koeficient průměrné teploty (mm / °C)"
+  ) +
+  theme_l07
+```
+
+::: columns
+::: {.column width="64%"}
+```{r}
+#| label: zobrazit-porovnani-nejistoty
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Dva bodové odhady koeficientu průměrné teploty s intervaly nejistoty porovnávají samostatný a vícenásobný model."
+p_porovnani
+```
+:::
+::: {.column width="32%"}
+[Jen průměrná teplota]{.text-hgl-graphite}
+
+<br>
+
+[`r format_value_cz(data_porovnani$se[[1]], digits = 5)`]{.text-size-heading .text-bold} standardní chyby
+
+<br>
+
+::: {.fragment}
+[Obě teploty]{.text-hgl-orange}
+
+[`r format_value_cz(data_porovnani$se[[2]], digits = 5)`]{.text-size-heading .text-bold} standardní chyby
+:::
+:::
+:::
+
+::: {.takeaway-strip .fragment}
+[Nejistota se zvětšila.]{.bold}
+:::
+
+## Přidáním prediktoru se změnila otázka
+
+<br>
+
+::: {.columns .fragment}
+::: {.column width="47%"}
+```{r}
+#| label: zobrazit-sdilenou-klimatickou-slozku
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| out-width: "100%"
+#| fig-alt: "Dva poslové přinášejí modelu částečně překrývající se klimatické důkazy."
+include_local_figure(
+  data_source = "sdilena_klimaticka_slozka.png"
+)
+```
+
+[Ilustrační obraz vytvořen AI.]{.footer}
+:::
+::: {.column width="49%"}
+[Jednoprediktorová otázka]{.text-hgl-graphite}
+
+Jaký je celkový vztah k průměrné teplotě?
+
+<br>
+
+[Podmíněná otázka]{.text-hgl-indigo_velvet}
+
+Jaký je vztah k průměrné teplotě při stejné maximální teplotě?
+:::
+:::
+
+<br>
+
+::: {.takeaway-strip .fragment}
+Ani jeden koeficient není „jediný pravý“. Odpovídají na [jiné otázky]{.text-hgl-orange}.
+:::
+
+## Původ populací mění obraz vztahu
+
+```{r}
+#| label: pripravit-graf-skupin
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+p_skupiny <-
+  ggplot2::ggplot(
+    data = data_kridlatka,
+    mapping = ggplot2::aes(
+      x = teplota_rocni_C,
+      y = tloustka_listu_mm,
+      color = puvod
+    )
+  ) +
+  ggplot2::geom_point(
+    alpha = 0.78,
+    size = 2.8
+  ) +
+  ggplot2::scale_color_manual(
+    values = c(
+      "Původní" = vec_cols_origin[["Původní"]],
+      "Zavlečené" = vec_cols_origin[["Zavlečené"]]
+    ),
+    name = "Původ"
+  ) +
+  ggplot2::labs(
+    x = "🌡️ Průměrná teplota původu (°C)",
+    y = "🌿 Průměrná tloušťka listu (mm)"
+  ) +
+  theme_l07
+```
+
+```{r}
+#| label: zobrazit-graf-skupin
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Bodový graf tloušťky listů proti průměrné teplotě rozlišuje původní a zavlečené populace."
+p_skupiny
+```
+
+## Co porovnává celkový sklon?
+
+<br>
+
+::: columns
+::: {.column width="60%"}
+```{r}
+#| label: zopakovat-graf-skupin
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-height: 4.4
+#| fig-alt: "Bodový graf tloušťky listů proti průměrné teplotě rozlišuje původní a zavlečené populace."
+p_skupiny
+```
+:::
+::: {.column width="38%"}
+[Která část klesajícího vztahu vzniká…]{.text-size-heading .text-bold .text-color-indigo_velvet}
+
+- rozdíly **uvnitř** skupin?
+- rozdílnými rozsahy **mezi** skupinami?
+:::
+:::
+
+::: {.notes}
+Nechte studenty ukázat prstem na části grafu. Nepředbíhejte pojem interakce.
+:::
+
+## Jeden model spojí teplotu i původ
+
+<br>
+
+```{r}
+#| label: model-puvod
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+mod_puvod <-
+  lm(
+    formula = tloustka_listu_mm ~ puvod + teplota_rocni_C,
+    data = data_kridlatka
+  )
+coef_puvod_tidy <- broom::tidy(mod_puvod)
+odhad_puvod <- setNames(coef_puvod_tidy$estimate, coef_puvod_tidy$term)
+```
+
+```r
+mod_puvod <- lm(
+  formula = tloustka_listu_mm ~
+    puvod + teplota_rocni_C,
+  data = data_kridlatka
+)
+
+summary(mod_puvod)
+```
+
+<br>
+
+::: {.fragment}
+
+```{r}
+#| label: model-puvod-coefs
+#| include: true
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+
+nazvy_puvodu <- c(
+  "(Intercept)" = "intercept (mm)",
+  "puvodZavlečené" = "zavlečené − původní (mm)",
+  "teplota_rocni_C" = "průměrná teplota (mm / °C)"
+)
+role_puvodu <- c(
+  "(Intercept)" = "průměr reference",
+  "puvodZavlečené" = "rozdíl skupin",
+  "teplota_rocni_C" = "společný sklon"
+)
+
+stopifnot(
+  setequal(coef_puvod_tidy$term, names(nazvy_puvodu)),
+  isTRUE(all.equal(
+    setNames(coef_puvod_tidy$estimate, coef_puvod_tidy$term)[names(coef(mod_puvod))],
+    coef(mod_puvod),
+    check.attributes = FALSE
+  ))
+)
+
+tabulka_koeficientu_puvod <- coef_puvod_tidy |>
+  dplyr::transmute(
+    Parametr = unname(nazvy_puvodu[term]),
+    Odhad = format_value_cz(estimate, digits = 5),
+    `Biologická role` = unname(role_puvodu[term])
+  )
+
+tinytable::tt(tabulka_koeficientu_puvod)
+```
+
+:::
+
+## Aditivní model: rovnoběžné přímky
+
+```{r}
+#| label: pripravit-predikce-puvod
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_predikce_puvod <-
+  tidyr::expand_grid(
+    puvod = levels(
+      x = data_kridlatka |>
+        dplyr::pull(var = puvod)
+    ),
+    teplota_rocni_C = seq(
+      from = min(
+        x = data_kridlatka |>
+          dplyr::pull(var = teplota_rocni_C)
+      ),
+      to = max(
+        x = data_kridlatka |>
+          dplyr::pull(var = teplota_rocni_C)
+      ),
+      length.out = 100
+    )
+  )
+
+data_predikce_puvod <-
+  data_predikce_puvod |>
+  dplyr::mutate(
+    odhad = predict(
+      object = mod_puvod,
+      newdata = data_predikce_puvod
+    )
+  )
+
+p_skupiny_model <-
+  p_skupiny +
+  ggplot2::geom_line(
+    data = data_predikce_puvod,
+    mapping = ggplot2::aes(
+      y = odhad,
+      group = puvod
+    ),
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1.4
+  )
+```
+
+```{r}
+#| label: zobrazit-model-skupin
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Dvě rovnoběžné regresní přímky ukazují společný sklon a rozdílnou výšku pro původní a zavlečené populace."
+p_skupiny_model
+```
+
+::: {.takeaway-strip}
+Stejný sklon pro obě skupiny je [znak aditivního modelu]{.text-hgl-indigo_velvet}.
+:::
+
+## Jak čteme společný sklon a posun skupiny?
+
+<br>
+
+::: {.takeaway-strip}
+Referenční skupina modelu: [Původní]{.text-hgl-graphite} populace.
+:::
+
+<br>
+
+
+::: columns
+::: {.column width="48%"}
+### `r format_value_cz(odhad_puvod[["teplota_rocni_C"]], digits = 5, signed = TRUE)` mm / °C
+
+Doplňte:
+
+„Při stejném ______ se odhadovaná tloušťka…“
+:::
+::: {.column width="48%"}
+### `r format_value_cz(odhad_puvod[["puvodZavlečené"]], digits = 5, signed = TRUE)` mm
+
+Doplňte:
+
+„Při stejné ______ mají zavlečené populace…“
+:::
+:::
+
+::: {.notes}
+Po 45 sekundách požádejte dvě dvojice o přesnou větu včetně jednotek.
+:::
+
+## Při zohlednění původu se sklon téměř obrátí
+
+<br>
+
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| ref.label: zobrazit-model-rocni
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+#| ref.label: zobrazit-model-skupin
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+```
+:::
+
+::::
+
+## Při zohlednění původu se sklon téměř obrátí
+
+```{r}
+#| label: pripravit-porovnani-sklonu
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_sklony <-
+  dplyr::bind_rows(
+    broom::tidy(mod_rocni_teplota) |>
+      dplyr::filter(term == "teplota_rocni_C") |>
+      dplyr::mutate(otazka = "Napříč všemi populacemi"),
+    broom::tidy(mod_puvod) |>
+      dplyr::filter(term == "teplota_rocni_C") |>
+      dplyr::mutate(otazka = "Při stejném původu")
+  ) |>
+  dplyr::transmute(
+    otazka = factor(
+      x = otazka,
+      levels = c("Napříč všemi populacemi", "Při stejném původu")
+    ),
+    sklon = estimate,
+    se = std.error
+  )
+
+p_sklony <-
+  ggplot2::ggplot(
+    data = data_sklony,
+    mapping = ggplot2::aes(
+      x = otazka,
+      y = sklon
+    )
+  ) +
+  ggplot2::geom_hline(
+    yintercept = 0,
+    color = biostat_cols[["grey_olive"]]
+  ) +
+  ggplot2::geom_errorbar(
+    mapping = ggplot2::aes(
+      ymin = sklon - kriticka_hodnota * se,
+      ymax = sklon + kriticka_hodnota * se
+    ),
+    color = biostat_cols[["orange"]],
+    linewidth = 1.5,
+    width = 0.12
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["indigo_velvet"]],
+    size = 5
+  ) +
+  ggplot2::labs(
+    x = NULL,
+    y = "🌡️ Koeficient průměrné teploty (mm / °C)"
+  ) +
+  theme_l07
+```
+
+```{r}
+#| label: zobrazit-porovnani-sklonu
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Dva odhady sklonu s intervaly ukazují záporný celkový vztah a téměř nulový podmíněný vztah při stejném původu."
+p_sklony
+```
+
+::: {.columns .text-center}
+::: {.column width="48%"}
+[Napříč populacemi:]{.text-hgl-graphite} 
+
+`r format_value_cz(data_sklony$sklon[[1]], digits = 5)` mm/°C
+:::
+::: {.column width="48%"}
+[Při stejném původu:]{.text-hgl-indigo_velvet} 
+
+`r format_value_cz(data_sklony$sklon[[2]], digits = 5, signed = TRUE)` mm/°C
+:::
+:::
+
+## Co už víme o klimatické otázce?
+
+<br>
+
+::: columns
+::: {.column width="48%"}
+::: {.card-result .fragment}
+[Víme]{.card-title}
+Původ a klimatické proměnné nesou překrývající se informaci. 
+
+Podmíněné asociace se liší od celkového sklonu.
+:::
+:::
+::: {.column width="48%"}
+::: {.card-question .fragment}
+[Ještě nevíme]{.card-title}
+Jak se skupiny liší při stejné, daty podložené teplotě? 
+:::
+:::
+:::
+
+# Odhad při společné teplotě
+
+## Pro obě skupiny potřebujeme společnou teplotu
+
+```{r}
+#| label: pripravit-rozsahy
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_rozsahy <-
+  dplyr::summarise(
+    .data = data_kridlatka,
+    minimum = min(x = teplota_rocni_C),
+    maximum = max(x = teplota_rocni_C),
+    .by = puvod
+  ) |>
+  dplyr::mutate(y = c(2, 1))
+
+teplota_srovnani_C <- 14
+
+p_rozsahy <-
+  ggplot2::ggplot(
+    data = data_rozsahy,
+    mapping = ggplot2::aes(
+      y = y,
+      color = puvod
+    )
+  ) +
+  ggplot2::geom_segment(
+    mapping = ggplot2::aes(
+      x = minimum,
+      xend = maximum,
+      yend = y
+    ),
+    linewidth = 8,
+    lineend = "round"
+  ) +
+  ggplot2::scale_color_manual(
+    values = c(
+      "Původní" = vec_cols_origin[["Původní"]],
+      "Zavlečené" = vec_cols_origin[["Zavlečené"]]
+    ),
+    guide = "none"
+  ) +
+  ggplot2::scale_y_continuous(
+    breaks = c(1, 2),
+    labels = c("Zavlečené", "Původní"),
+    limits = c(0.65, 2.55)
+  ) +
+  ggplot2::labs(
+    x = "🌡️ Průměrná teplota původu (°C)",
+    y = NULL
+  ) +
+  theme_l07
+
+p_rozsahy_srovnani <-
+  p_rozsahy +
+  ggplot2::geom_vline(
+    xintercept = teplota_srovnani_C,
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1.3,
+    linetype = "dashed"
+  ) +
+  ggplot2::annotate(
+    geom = "text",
+    x = teplota_srovnani_C,
+    y = 2.45,
+    label = paste(teplota_srovnani_C, "°C"),
+    color = biostat_cols[["indigo_velvet"]],
+    fontface = "bold",
+    size = 6
+  )
+```
+
+```{r}
+#| label: zobrazit-rozsahy
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Úsečky ukazují rozsahy průměrné teploty původních a zavlečených populací a jejich společný překryv."
+p_rozsahy
+```
+
+## Která teplota leží v překryvu obou skupin?
+
+<br>
+
+::: columns
+::: {.column width="54%"}
+```{r}
+#| label: zopakovat-rozsahy
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-height: 4.4
+#| fig-alt: "Rozsahy průměrných teplot původních a zavlečených populací umožňují vybrat společný srovnávací bod."
+p_rozsahy
+```
+:::
+::: {.column width="42%"}
+[Vyberte podložené srovnání:]{.text-size-heading .text-bold .text-color-indigo_velvet}
+
+::: {.panel-question}
+**A)** 1 °C
+:::
+
+::: {.panel-question .rn-circle-orange}
+**B)** `r format_value_cz(teplota_srovnani_C, digits = 0)` °C
+:::
+
+::: {.panel-question}
+**C)** 21 °C
+:::
+
+:::
+:::
+
+## `r format_value_cz(teplota_srovnani_C, digits = 0)` °C leží uvnitř překryvu obou skupin
+
+```{r}
+#| label: zobrazit-rozsahy-se-srovnanim
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Rozsahy průměrných teplot obou skupin se překrývají a přerušovaná čára označuje společný srovnávací bod."
+p_rozsahy_srovnani
+```
+
+::: {.takeaway-strip}
+Obě skupiny mají poblíž [pozorované populace]{.text-hgl-indigo_velvet}.
+:::
+
+## Dvě modelové populace se liší pouze původem
+
+<br>
+
+```{r}
+#| label: pripravit-scenare-puvodu
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_scenare <-
+  tibble::tibble(
+    puvod = factor(
+      x = c("Původní", "Zavlečené"),
+      levels = levels(
+        x = data_kridlatka |>
+          dplyr::pull(var = puvod)
+      )
+    ),
+    teplota_rocni_C = rep(
+      x = teplota_srovnani_C,
+      times = 2
+    )
+  )
+```
+
+:::: {.columns}
+
+::: {.column width="40%"}
+```r
+teplota_srovnani_C <- 14
+
+data_scenare <- data.frame(
+  puvod = c("Původní", "Zavlečené"),
+  teplota_rocni_C = rep(
+    x = teplota_srovnani_C,
+    times = 2
+  )
+)
+```
+:::
+
+::: {.column width="60%" .fragment}
+
+```{r}
+#| label: zobrazit-scenare-puvodu
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+tinytable::tt(
+  x = data_scenare
+)
+```
+:::
+
+::::
+
+<br>
+
+::: {.takeaway-strip .fragment}
+Teplotu držíme [stejnou]{.text-hgl-graphite}. Měníme [pouze původ]{.text-hgl-orange}.
+:::
+
+## Odhad při `r format_value_cz(teplota_srovnani_C, digits = 0)` °C: stejný výpočet
+
+Opakování z minulé lekce: odhad = intercept + posun skupiny + sklon × teplota.
+
+<br>
+
+::: {.columns .fragment}
+::: {.column width="48%"}
+### Původní
+$$
+\begin{aligned}
+`r format_value_cz(odhad_puvod[["(Intercept)"]], digits = 5, math = TRUE)` + 0 + `r format_value_cz(odhad_puvod[["teplota_rocni_C"]], digits = 6, math = TRUE)` \times `r format_value_cz(teplota_srovnani_C, digits = 0, math = TRUE)`\\
+= \mathbf{`r format_value_cz(predict(mod_puvod, newdata = data_scenare)[[1]], digits = 3, math = TRUE)`}\ \text{mm}
+\end{aligned}
+$$
+:::
+::: {.column width="48%"}
+### Zavlečené
+$$
+\begin{aligned}
+`r format_value_cz(odhad_puvod[["(Intercept)"]], digits = 5, math = TRUE)` + `r format_value_cz(odhad_puvod[["puvodZavlečené"]], digits = 5, math = TRUE)` + `r format_value_cz(odhad_puvod[["teplota_rocni_C"]], digits = 6, math = TRUE)` \times `r format_value_cz(teplota_srovnani_C, digits = 0, math = TRUE)`\\
+= \mathbf{`r format_value_cz(predict(mod_puvod, newdata = data_scenare)[[2]], digits = 3, math = TRUE)`}\ \text{mm}
+\end{aligned}
+$$
+:::
+:::
+
+<br>
+
+::: {.fragment}
+
+```{r}
+#| label: predikce-srovnani
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+predict(object = mod_puvod, newdata = data_scenare)
+```
+:::
+
+
+## Bodový odhad ještě neukazuje přesnost
+
+<br>
+
+```{r}
+#| label: zobrazit-koeficienty-srovnani
+#| echo: true
+#| eval: true
+#| message: false
+#| warning: false
+#| 
+coef(mod_puvod)
+```
+
+<br>
+
+::: {.fragment}
+[Jak nejistý je modelový rozdíl mezi skupinami při `r format_value_cz(teplota_srovnani_C, digits = 0)` °C?]{.text-size-heading .text-bold .text-color-indigo_velvet}
+:::
+
+<br>
+
+::: {.fragment}
+Potřebujeme [intervaly spolehlivosti]{.text-hgl-orange}!
+:::
+
+## Modelové průměry doplníme o intervaly spolehlivosti
+
+```{r}
+#| label: pripravit-predikce-srovnani
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_predikce_srovnani <-
+  predict(
+    object = mod_puvod,
+    newdata = data_scenare,
+    interval = "confidence",
+    level = uroven_spolehlivosti
+  ) |>
+  tibble::as_tibble()
+
+data_predikce_srovnani <-
+  dplyr::bind_cols(
+    data_scenare,
+    data_predikce_srovnani
+  )
+
+p_predikce_srovnani <-
+  p_skupiny_model +
+  ggplot2::geom_errorbar(
+    data = data_predikce_srovnani,
+    mapping = ggplot2::aes(
+      x = teplota_rocni_C,
+      ymin = lwr,
+      ymax = upr
+    ),
+    inherit.aes = FALSE,
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1.4,
+    width = 0.35
+  ) +
+  ggplot2::geom_point(
+    data = data_predikce_srovnani,
+    mapping = ggplot2::aes(
+      x = teplota_rocni_C,
+      y = fit,
+      fill = puvod
+    ),
+    inherit.aes = FALSE,
+    shape = 21,
+    color = biostat_cols[["white"]],
+    stroke = 1.2,
+    size = 6
+  ) +
+  ggplot2::scale_fill_manual(
+    values = c(
+      "Původní" = vec_cols_origin[["Původní"]],
+      "Zavlečené" = vec_cols_origin[["Zavlečené"]]
+    ),
+    guide = "none"
+  )
+```
+
+:::: {.columns}
+
+::: {.column width="50%"}
+```r
+emmeans::emmeans(
+  object = mod_puvod,
+  specs = "puvod",
+  at = list(teplota_rocni_C = teplota_srovnani_C)
+)
+```
+:::
+
+::: {.column width="50%" .fragment fragment-index=2}
+```{r}
+#| label: zobrazit-predikce-srovnani
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Modelové průměry při společné srovnávací teplotě ukazují vyšší tloušťku listů zavlečených populací a intervaly spolehlivosti."
+p_predikce_srovnani
+```
+:::
+
+
+::: {.fragment fragment-index=1}
+
+```{r}
+#| label: zobrazit-emmeans-srovnani
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+emmeans::emmeans(
+  object = mod_puvod,
+  specs = "puvod",
+  at = list(teplota_rocni_C = teplota_srovnani_C)
+)  |> 
+as.data.frame() |>
+dplyr::select(-df) |> 
+tinytable::tt(
+  digits = 3,
+)
+```
+:::
+
+::::
+
+## Co zjistíme při stejné teplotě?
+
+::: columns
+
+<br>
+<br>
+
+::: {.column width="52%"}
+```{r}
+#| label: zopakovat-predikce-srovnani
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-height: 4.4
+#| fig-alt: "Dva modelové průměry při společné srovnávací teplotě ukazují vyšší tloušťku listů zavlečených populací a jejich intervaly spolehlivosti."
+p_predikce_srovnani
+```
+:::
+::: {.column width="44%"}
+[Napište jednu větu:]{.text-size-heading .text-bold .text-color-indigo_velvet}
+
+::: incremental
+- [`r format_value_cz(teplota_srovnani_C, digits = 0)` °C]{.text-hgl-graphite} jako srovnávací podmínku;
+- rozdíl přibližně [`r format_value_cz(diff(data_predikce_srovnani$fit), digits = 3)` mm]{.text-hgl-indigo_velvet};
+- [intervaly]{.text-hgl-orange}: původní `r format_value_cz(data_predikce_srovnani$lwr[[1]], digits = 3)`–`r format_value_cz(data_predikce_srovnani$upr[[1]], digits = 3)` mm, zavlečené `r format_value_cz(data_predikce_srovnani$lwr[[2]], digits = 3)`–`r format_value_cz(data_predikce_srovnani$upr[[2]], digits = 3)` mm;
+- slovo [souvisí nebo asociace]{.text-hgl-indigo_velvet}, ne [„způsobuje“]{.text-hgl-orange}.
+:::
+:::
+:::
+
+::: {.notes}
+Tichý zápis, potom porovnání ve dvojici. Nechte jednu větu přečíst nahlas.
+:::
+
+# Predikovatelné scénáře
+
+
+## Model spočítá i kombinaci mimo pozorovaný mrak
+
+::: columns
+::: {.column width="46%"}
+```{r}
+#| label: zobrazit-klimaticky-pas
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| out-width: "100%"
+#| fig-alt: "Klimatická pasová kontrola přijímá realistickou dvojici teplot a zpochybňuje neobvyklou kombinaci."
+include_local_figure(
+  data_source = "klimaticky_pas_predikce.png"
+)
+```
+
+[Ilustrační obraz vytvořen AI.]{.footer}
+:::
+::: {.column width="50%"}
+[Numericky platné]{.text-hgl-graphite}
+
+`predict()` vrátí číslo.
+
+<br>
+
+[Empiricky podložené]{.text-hgl-indigo_velvet}
+
+V datech existují blízké kombinace obou prediktorů.
+:::
+:::
+
+::: {.takeaway-strip .fragment}
+Dva jednotlivě možné údaje nemusí tvořit [společně realistický scénář]{.text-hgl-orange}.
+:::
+
+## Který scénář má oporu v datech?
+
+```{r}
+#| label: pripravit-scenare-klima
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_scenare_klima <-
+  tibble::tibble(
+    teplota_rocni_C = c(teplota_srovnani_C, 7),
+    teplota_max_C = c(29, 33),
+    podpora = factor(
+      x = c("Má oporu", "Nemá oporu"),
+      levels = c("Má oporu", "Nemá oporu")
+    )
+  )
+```
+
+```{r}
+#| ref.label: zobrazit-graf-teplot
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Bodový graf ukazuje pozorované kombinace průměrné a maximální teploty zdrojových populací."
+```
+
+::: columns
+::: {.column width="48%"}
+::: {.panel-question .rn-circle-orange}
+**A)** průměrná `r format_value_cz(data_scenare_klima$teplota_rocni_C[[1]], digits = 0)` °C, maximum `r format_value_cz(data_scenare_klima$teplota_max_C[[1]], digits = 0)` °C
+:::
+:::
+::: {.column width="48%"}
+::: {.panel-question}
+**B)** průměrná `r format_value_cz(data_scenare_klima$teplota_rocni_C[[2]], digits = 0)` °C, maximum `r format_value_cz(data_scenare_klima$teplota_max_C[[2]], digits = 0)` °C
+:::
+:::
+:::
+
+## Jedna kombinace leží v mraku, druhá mimo něj
+
+```{r}
+#| label: vykreslit-scenare-klima
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+p_podpora <-
+  p_teploty +
+  ggplot2::geom_point(
+    data = data_scenare_klima,
+    mapping = ggplot2::aes(
+      color = podpora,
+      shape = podpora
+    ),
+    size = 6,
+    stroke = 1.7
+  ) +
+  ggplot2::scale_color_manual(
+    values = c(
+      "Má oporu" = biostat_cols[["indigo_velvet"]],
+      "Nemá oporu" = biostat_cols[["orange"]]
+    ),
+    name = NULL
+  ) +
+  ggplot2::scale_shape_manual(
+    values = c(
+      "Má oporu" = 16,
+      "Nemá oporu" = 4
+    ),
+    name = NULL
+  )
+```
+
+```{r}
+#| label: zobrazit-podporu-scenaru
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-alt: "Bodový graf zvýrazňuje jednu kombinaci teplot uvnitř pozorovaného mraku a druhou kombinaci mimo něj."
+p_podpora
+```
+
+::: {.takeaway-strip}
+[A má oporu:]{.text-hgl-indigo_velvet} poblíž leží pozorované kombinace. [B oporu nemá:]{.text-hgl-orange} oba údaje se v datech vyskytují, ale ne společně.
+:::
+
+# Pořadí prediktorů
+
+## Změní pořadí prediktorů výsledek modelu?
+
+```{r}
+#| label: model-dve-teploty-opacne
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+mod_dve_teploty_opacne <-
+  lm(
+    formula = tloustka_listu_mm ~ teplota_max_C + teplota_rocni_C,
+    data = data_kridlatka
+  )
+```
+
+```r
+mod_prumer_max <- lm(
+  formula = tloustka_listu_mm ~ teplota_rocni_C + teplota_max_C,
+  data = data_kridlatka
+)
+mod_max_prumer <- lm(
+  formula = tloustka_listu_mm ~ teplota_max_C + teplota_rocni_C,
+  data = data_kridlatka
+)
+```
+
+<br>
+
+| Co se může změnit? | Ano / ne? |
+|---|---|
+| odhadnuté hodnoty | ? |
+| koeficienty a jejich testy | ? |
+| výsledek `anova()` | ? |
+
+::: {.notes}
+Nechte každého označit tři odpovědi, pak porovnat ve dvojici.
+:::
+
+## Koeficienty se po změně pořadí nezmění
+
+```{r}
+#| label: zobrazit-koeficienty-po-zmene-poradi
+#| echo: false
+#| message: false
+#| warning: false
+koef_poradi_a <- broom::tidy(mod_dve_teploty)
+koef_poradi_b <- broom::tidy(mod_dve_teploty_opacne)
+teplotni_terminy <- c("teplota_rocni_C", "teplota_max_C")
+
+odhad_poradi_a <- setNames(koef_poradi_a$estimate, koef_poradi_a$term)[teplotni_terminy]
+odhad_poradi_b <- setNames(koef_poradi_b$estimate, koef_poradi_b$term)[teplotni_terminy]
+
+stopifnot(
+  !anyNA(odhad_poradi_a),
+  !anyNA(odhad_poradi_b),
+  isTRUE(all.equal(unname(odhad_poradi_a), unname(odhad_poradi_b)))
+)
+
+tabulka_poradi <- data.frame(
+  Koeficient = c("průměrná teplota", "maximální teplota"),
+  `průměrná + maximum` = format_value_cz(odhad_poradi_a, digits = 6),
+  `maximum + průměrná` = format_value_cz(odhad_poradi_b, digits = 6),
+  check.names = FALSE
+)
+
+tinytable::tt(tabulka_poradi)
+```
+
+<br>
+
+::: {.incremental}
+- stejné odhadnuté hodnoty;
+- stejná rezidua;
+- stejné koeficienty a standardní chyby.
+:::
+
+<br>
+
+::: {.takeaway-strip .fragment}
+[Podmíněná otázka modelu]{.text-hgl-indigo_velvet} se pořadím zápisu nemění.
+:::
+
+## Který prediktor dostane sdílenou klimatickou informaci?
+
+::: columns
+::: {.column width="53%"}
+```{r}
+#| label: zobrazit-frontu-prediktoru
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| out-width: "100%"
+#| fig-alt: "Dva klimatické prediktory stojí ve frontě na sdílenou hromádku informace; první si bere společnou část."
+include_local_figure(
+  data_source = "fronta_na_sdilenou_informaci.png"
+)
+```
+
+[Ilustrační obraz vytvořen AI.]{.footer}
+:::
+::: {.column width="43%"}
+
+::: {.fragment}
+[Sekvenční test]{.text-hgl-orange} se ptá zleva doprava.
+
+<br>
+
+[První prediktor]{.text-hgl-graphite} dostane i sdílenou část.
+
+<br>
+
+[Druhý prediktor]{.text-hgl-indigo_velvet} dostane pouze informaci navíc.
+:::
+:::
+:::
+
+## Sekvenční test čte formuli zleva doprava
+
+```{r}
+#| label: pripravit-sekvencni-testy
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_anova_poradi <-
+  dplyr::bind_rows(
+    broom::tidy(anova(mod_dve_teploty)) |>
+      dplyr::slice_head(n = 2) |>
+      dplyr::mutate(
+        poradi = c("průměrná → max", ""),
+        termin = c("průměrná", "maximum po průměrné")
+      ),
+    broom::tidy(anova(mod_dve_teploty_opacne)) |>
+      dplyr::slice_head(n = 2) |>
+      dplyr::mutate(
+        poradi = c("max → průměrná", ""),
+        termin = c("maximum", "průměrná po maximu")
+      )
+  ) |>
+  dplyr::mutate(
+    text_p = dplyr::if_else(
+      condition = p.value < .Machine$double.eps,
+      true = "< 2×10⁻¹⁶",
+      false = format_value_cz(p.value, digits = 6)
+    )
+  )
+```
+
+::: {.text-size-smaller}
+| Pořadí | Termín | Součet čtverců | F | p |
+|---|---|---:|---:|---:|
+| `r data_anova_poradi$poradi[[1]]` | `r data_anova_poradi$termin[[1]]` | `r format_value_cz(data_anova_poradi$sumsq[[1]], digits = 5)` | `r format_value_cz(data_anova_poradi$statistic[[1]], digits = 2)` | `r data_anova_poradi$text_p[[1]]` |
+| `r data_anova_poradi$poradi[[2]]` | `r data_anova_poradi$termin[[2]]` | `r format_value_cz(data_anova_poradi$sumsq[[2]], digits = 5)` | `r format_value_cz(data_anova_poradi$statistic[[2]], digits = 2)` | `r data_anova_poradi$text_p[[2]]` |
+| `r data_anova_poradi$poradi[[3]]` | `r data_anova_poradi$termin[[3]]` | `r format_value_cz(data_anova_poradi$sumsq[[3]], digits = 5)` | `r format_value_cz(data_anova_poradi$statistic[[3]], digits = 2)` | `r data_anova_poradi$text_p[[3]]` |
+| `r data_anova_poradi$poradi[[4]]` | `r data_anova_poradi$termin[[4]]` | `r format_value_cz(data_anova_poradi$sumsq[[4]], digits = 5)` | `r format_value_cz(data_anova_poradi$statistic[[4]], digits = 2)` | `r data_anova_poradi$text_p[[4]]` |
+:::
+
+<br>
+
+::: {.takeaway-strip .fragment}
+[Sdílená informace]{.text-hgl-orange} se započítá prvnímu termínu. Proto se řádky po prohození změní.
+:::
+
+## Pořadí mění sekvenční test, nikoli fit modelu
+
+<br>
+
+::: columns
+::: {.column width="48%" .fragment}
+::: {.card-result}
+[Nemění se]{.card-title}
+koeficienty, rezidua, testy koeficientů
+:::
+:::
+::: {.column width="48%" .fragment}
+::: {.card-warning}
+[Mění se]{.card-title}
+sekvenční součty čtverců, F a p v `anova()`
+:::
+:::
+:::
+
+<br>
+
+::: {.strip-orange .fragment}
+Přehazování pořadí není strategie výběru prediktorů ani cesta k „hezčí“ p-hodnotě.
+:::
+
+## Jak postupovat u modelu s více prediktory
+
+<br>
+
+::: columns
+::: {.column width="31%"}
+::: {.panel-question .fragment}
+[1. Otázka]{.card-title}
+
+Biologie · observační jednotka
+:::
+
+<br>
+
+::: {.panel-data .fragment}
+[2. Data]{.card-title}
+
+Prediktory prohlédnout společně
+:::
+:::
+
+::: {.column width="31%"}
+::: {.panel-result .fragment}
+[3. Model]{.card-title}
+
+Podmíněné koeficienty
+:::
+
+<br>
+
+::: {.panel-result .fragment}
+[4. Predikce]{.card-title}
+
+Jen v podložené oblasti
+:::
+:::
+
+
+::: {.column width="31%"}
+::: {.panel-warning .fragment}
+[5. Kontrola]{.card-title}
+
+Rezidua · nejistota · typ testu
+:::
+
+<br>
+
+::: {.panel-question .fragment}
+[6. Výklad]{.card-title}
+
+Zpět k biologii
+:::
+:::
+:::
+
+## Společná zahrada sjednocuje prostředí, ne historii populací
+
+::: columns
+::: {.column width="51%"}
+```{r}
+#| label: zobrazit-kufry-historie
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| out-width: "100%"
+#| fig-alt: "Křídlatky z různých geografických původů rostou ve stejných květináčích a přinášejí si kufry své historie."
+include_local_figure(
+  data_source = "spolecna_zahrada_s_kufry.png"
+)
+```
+
+[Ilustrační obraz vytvořen AI.]{.footer}
+:::
+::: {.column width="45%"}
+[V zahradě stejné:]{.text-hgl-indigo_velvet} aktuální podmínky pěstování
+
+[Mezi populacemi různé:]{.text-hgl-orange} klima místa původu, geografická a evoluční historie
+
+::: {.fragment}
+Proto mluvíme o [asociaci]{.text-hgl-indigo_velvet}, ne o důkazu, že klima rozdíly [způsobilo]{.text-hgl-orange}.
+:::
+:::
+:::
+
+## Co si odnést
+
+::: incremental
+- Koeficient říká, co se mění [při stejných ostatních prediktorech]{.text-hgl-indigo_velvet}.
+- Přidání prediktoru mění [otázku, nejen číslo]{.text-hgl-orange}.
+- Korelované prediktory [zvyšují nejistotu]{.text-hgl-orange} oddělených koeficientů.
+- Pořadí mění [sekvenční `anova()`]{.text-hgl-orange}, ne fit modelu.
+- Predikce potřebuje [kombinaci hodnot zastoupenou v datech]{.text-hgl-indigo_velvet}.
+:::
+
+## Kdy by rovnoběžné přímky nestačily?
+
+::: columns
+::: {.column width="61%"}
+```{r}
+#| label: zobrazit-rozdilne-sklony
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| out-width: "100%"
+#| fig-alt: "Dvě skupiny křídlatek nejprve kráčejí po rovnoběžných cestách, které se v druhé scéně rozbíhají."
+include_local_figure(
+  data_source = "rovnobezne_nebo_rozbihave_cesty.png"
+)
+```
+
+[Ilustrační obraz vytvořen AI.]{.footer}
+:::
+::: {.column width="35%"}
+[Jaký biologický vzorec by vyžadoval různé sklony pro obě skupiny?]{.text-size-heading .text-bold .text-color-indigo_velvet}
+
+<br>
+
+[To je otázka pro další lekci.]{.text-color-grey_olive}
+:::
+:::
+
+::: {.notes}
+Závěrečný retrieval prompt. Nezavádějte ani nefitujte interakci.
+:::
