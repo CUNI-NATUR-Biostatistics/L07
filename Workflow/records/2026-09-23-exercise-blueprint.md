@@ -6,7 +6,7 @@
 - Branch: `lesson/l07-exercises`, created from clean `main` at `68923d3` after the released presentation and learning materials
 - Sources: released L07 written lesson and presentation, `_internal/osnova_lekci.md`, and the L06 practical
 - Independent exercise review: complete; final focused re-review reported no findings
-- Human exercise approval: pending
+- Human exercise approval: Ondřej Mottl, 2026-09-23; approved the completed worksheet with no requested revisions
 
 The 90-minute practical has a planned 68-minute direct-work route: 10 minutes for project and file preparation, then 58 minutes for L07-U01 through L07-U08. About 22 minutes remain for explanation, discussion, and slower groups. The same public script must work for classroom use and self-study. Teacher transitions, pacing cues, and troubleshooting policy remain in this record rather than the student worksheet.
 
