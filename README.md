@@ -34,6 +34,8 @@ Následující odkazy vedou vždy na nejnovější schválené vydání L07. Roz
 | --- | --- | --- |
 | Skripta | [Číst online](https://cuni-natur-biostatistics.github.io/L07/current/learning/) | [Stáhnout PDF](https://cuni-natur-biostatistics.github.io/L07/current/learning/skripta.pdf) |
 | Prezentace | [Otevřít slidy](https://cuni-natur-biostatistics.github.io/L07/current/presentation/) | [Stáhnout PDF](https://cuni-natur-biostatistics.github.io/L07/current/presentation/presentation.pdf) |
+| Praktické cvičení v R | [Stáhnout skript](https://cuni-natur-biostatistics.github.io/L07/current/code/cviceni.R) | — |
+| Data ke cvičení | [Populace křídlatky](https://cuni-natur-biostatistics.github.io/L07/current/data/kridlatka_populace.csv) | — |
 
 - [HUB kurzu](https://cuni-natur-biostatistics.github.io/) je hlavní vstup ke všem veřejným studijním materiálům.
 - [Moodle kurzu](https://dl2.cuni.cz/course/view.php?id=106) slouží zapsaným studentům pro oznámení, testy, zadání, odevzdávání a individuální výsledky.
@@ -44,6 +46,7 @@ Následující odkazy vedou vždy na nejnovější schválené vydání L07. Roz
 
 - `Learning_materials/skripta.qmd` je zdroj skript; výsledky jsou `Learning_materials/skripta.html` a `Learning_materials/skripta.pdf`.
 - `Presentation/presentation.qmd` je zdroj slidů; výsledky jsou `Presentation/presentation.html` a `Presentation/presentation.pdf`.
+- `Exercises/cviceni.R` je schválený studentský skript k praktickému cvičení.
 - `data/kridlatka_populace.csv` je připravený výukový dataset populací křídlatky z Dryad a CHELSA; zdroje, licence a kontrolní součet popisuje [datový README](data/README.md).
 - `R/` obsahuje podporované renderovací a tematické nástroje.
 - `theme/` obsahuje synchronizovanou lokální kopii společné vizuální identity kurzu.
