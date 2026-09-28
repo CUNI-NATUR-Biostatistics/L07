@@ -646,6 +646,13 @@ V prvním modelu koeficient průměrné roční teploty zahrnuje veškerou infor
 
 Odhad se proto změní z `r formatC(x = coef(object = mod_rocni_teplota)["teplota_rocni_C"], format = "f", digits = 5)` na `r formatC(x = coef(object = mod_dve_teploty)["teplota_rocni_C"], format = "f", digits = 5)` mm na 1 °C. `r render_glossary_term("standardni-chyba", display = "Standardní chyba")` současně vzroste z `r formatC(x = coef(object = summary(object = mod_rocni_teplota))["teplota_rocni_C", "Std. Error"], format = "f", digits = 5)` na `r formatC(x = coef(object = summary(object = mod_dve_teploty))["teplota_rocni_C", "Std. Error"], format = "f", digits = 5)`. Korelované prediktory poskytují málo populací, které se výrazně liší v jedné teplotě při téměř stejné druhé teplotě. Samostatné koeficienty se proto oddělují s větší nejistotou, přestože model lze bez problému fitovat.
 
+::: {.box-extra title="Doplňující: korelované prediktory mohou vytvářet nestabilní koeficienty" collapse="true"}
+
+Právě zobrazené tabulky ukázaly, že když dva prediktory nesou téměř stejnou informaci, model má málo pozorování, která by je dokázala od sebe oddělit. Malá změna dat nebo přidání několika populací pak může výrazně změnit jejich jednotlivé koeficienty, znaménka i standardní chyby. Proto je nečteme jako dvě samostatné biologické odpovědi bez ohledu na jejich překryv.
+
+Pomocným ukazatelem bývá VIF (*variance inflation factor*), který shrnuje, nakolik je nejistota koeficientu zvětšena překryvem s ostatními prediktory. <!-- TODO: add slug vif to pojmy.yaml --> VIF ale nemá univerzální hranici, po jejímž překročení musíme proměnnou automaticky smazat. Nejdříve se vracíme k biologické otázce, rozsahu společně pozorovaných hodnot a tomu, zda chceme samostatně interpretovat koeficienty, nebo předpovídat podporované kombinace.
+:::
+
 ::: {.box-extra title="Doplňující: porovnání není výběr nejlepšího modelu" collapse="true"}
 
 Zde porovnáváme koeficienty, protože chceme pochopit, jak přidání souvisejícího prediktoru změnilo statistickou otázku. O výběru modelu ale nerozhodujeme. V dalších lekcích budeme pracovat s principem úspornosti: mezi biologicky smysluplnými modely budeme hledat takový, který popisuje data dostatečně dobře bez zbytečné složitosti. K tomu nestačí vybrat model s nejvyšším `r render_glossary_term("r2", display = "R²")`.
@@ -856,6 +863,15 @@ Označená populace není automaticky chybná a nemažeme ji pouze kvůli vysok�
 :::
 
 Po přidání původu se koeficient roční teploty změní z `r formatC(x = coef(object = mod_rocni_teplota)["teplota_rocni_C"], format = "f", digits = 5)` na `r formatC(x = coef(object = mod_puvod)["teplota_rocni_C"], format = "f", digits = 5)` mm na 1 °C. První model popisuje celkový vztah napříč oblastmi. Druhý porovnává populace stejného statusu původu. Ani jeden koeficient není „ten jediný pravý“; odpovídají na jiné otázky.
+
+::: {.box-extra title="Doplňující: přidat další prediktor není vždy správná kontrola" collapse="true"}
+
+Další prediktor má smysl přidat podle biologické otázky a představy o tom, jak proměnné vznikly. Při `r render_glossary_term("konfundovani", display = "konfundování")` ovlivňuje třetí proměnná prediktor i `r render_glossary_term("odezva", display = "odezvu")`, takže jejich celková asociace mísí více cest. Zohlednění takové proměnné může otázku zpřesnit.
+
+Jiná situace nastane, když doplníme **prostřední článek** mechanismu. Pokud hnojení mění obsah dusíku v listu a ten následně růst, kontrola dusíku odstraní část účinku hnojení a položí užší otázku o přímé cestě. Ještě opatrnější musíme být u **společného následku** dvou proměnných: výběr pouze přeživších jedinců může vytvořit asociaci mezi vlastnostmi, které ovlivňují přežití, i když spolu v původní populaci nesouvisely. <!-- TODO: add slugs mediator and collider to pojmy.yaml -->
+
+Pravidlo „přidejte do modelu vše, co máte“ proto nechrání automaticky před zkreslením. Model popisuje podmíněné vztahy; kauzální význam vyžaduje navíc znalost uspořádání studie a biologického mechanismu.
+:::
 
 ## Jak model odhadne tloušťku při stejné teplotě
 

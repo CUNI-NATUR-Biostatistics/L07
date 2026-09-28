@@ -2575,7 +2575,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Upraveno</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">21. září 2026</p>
+      <p class="date-modified">28. září 2026</p>
     </div>
   </div>
     
@@ -3379,11 +3379,28 @@ teplota_max_C   -0.004750850 0.001669974 -2.844864 5.193218e-03</code></pre>
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Poznámka</span>Doplňující: porovnání není výběr nejlepšího modelu
+<span class="screen-reader-only">Poznámka</span>Doplňující: korelované prediktory mohou vytvářet nestabilní koeficienty
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
 <div id="callout-11" class="callout-11-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Právě zobrazené tabulky ukázaly, že když dva prediktory nesou téměř stejnou informaci, model má málo pozorování, která by je dokázala od sebe oddělit. Malá změna dat nebo přidání několika populací pak může výrazně změnit jejich jednotlivé koeficienty, znaménka i standardní chyby. Proto je nečteme jako dvě samostatné biologické odpovědi bez ohledu na jejich překryv.</p>
+<p>Pomocným ukazatelem bývá VIF (<em>variance inflation factor</em>), který shrnuje, nakolik je nejistota koeficientu zvětšena překryvem s ostatními prediktory. <!-- TODO: add slug vif to pojmy.yaml --> VIF ale nemá univerzální hranici, po jejímž překročení musíme proměnnou automaticky smazat. Nejdříve se vracíme k biologické otázce, rozsahu společně pozorovaných hodnot a tomu, zda chceme samostatně interpretovat koeficienty, nebo předpovídat podporované kombinace.</p>
+</div>
+</div>
+</div>
+<div class="callout-extra callout callout-style-default callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-12-contents" aria-controls="callout-12" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Poznámka</span>Doplňující: porovnání není výběr nejlepšího modelu
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-12" class="callout-12-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>Zde porovnáváme koeficienty, protože chceme pochopit, jak přidání souvisejícího prediktoru změnilo statistickou otázku. O výběru modelu ale nerozhodujeme. V dalších lekcích budeme pracovat s principem úspornosti: mezi biologicky smysluplnými modely budeme hledat takový, který popisuje data dostatečně dobře bez zbytečné složitosti. K tomu nestačí vybrat model s nejvyšším <a class="glossary" href>R²<span class="def">Podíl variability odezvy vysvětlený modelem (0 = model nevysvětluje nic, 1 = model vysvětluje vše).</span></a>.</p>
 </div>
@@ -3513,7 +3530,7 @@ F-statistic: 158.5 on 2 and 125 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 <p>Rovnoběžné přímky zobrazují aditivní model: při každé teplotě je modelový rozdíl mezi skupinami stejný a obě skupiny mají společný sklon.</p>
 <div class="callout-extra callout callout-style-default callout-note no-icon callout-titled">
-<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-15-contents" aria-controls="callout-15" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-16-contents" aria-controls="callout-16" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon no-icon"></i>
 </div>
@@ -3522,7 +3539,7 @@ F-statistic: 158.5 on 2 and 125 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
-<div id="callout-15" class="callout-15-contents callout-collapse collapse">
+<div id="callout-16" class="callout-16-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>Graf může vyvolat otázku, zda se vztah mezi roční teplotou a tloušťkou listu liší podle původu populace. Takovou otázku řeší <a class="glossary" href>interakce prediktorů<span class="def">Situace, kdy efekt jednoho prediktoru na odezvu závisí na hodnotě jiného prediktoru.</span></a>: dovolila by každé skupině jiný sklon, takže přímky by nemusely být rovnoběžné. Interakce patří do následující lekce; zde ji nefitujeme ani neinterpretujeme.</p>
 <div class="cell">
@@ -3553,7 +3570,7 @@ F-statistic: 158.5 on 2 and 125 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 <p>V grafu hledáme zakřivení nebo změnu <a class="glossary" href>rozptylu<span class="def">Průměr čtverců odchylek od průměru; míra variability dat. Odmocnina rozptylu je směrodatná odchylka.</span></a> <a class="glossary" href>reziduí<span class="def">Rozdíl mezi pozorovanou hodnotou odezvy a hodnotou predikovanou modelem: eᵢ = yᵢ − ŷᵢ.</span></a>. <a class="glossary" href>Diagnostický graf<span class="def">Soubor grafických a numerických kontrol ověřujících, zda jsou splněny předpoklady modelu: linearita, normalita reziduí, homoskedasticita, absence vlivných bodů.</span></a> zde neukazuje důvod měnit předem zvolenou strukturu modelu.</p>
 <div class="callout-extra callout callout-style-default callout-note no-icon callout-titled">
-<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-16-contents" aria-controls="callout-16" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-17-contents" aria-controls="callout-17" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon no-icon"></i>
 </div>
@@ -3562,7 +3579,7 @@ F-statistic: 158.5 on 2 and 125 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
-<div id="callout-16" class="callout-16-contents callout-collapse collapse">
+<div id="callout-17" class="callout-17-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>Cookova vzdálenost doplňuje kontrolu reziduí o otázku, zda některá populace výrazně ovlivňuje odhadnuté koeficienty:</p>
 <div class="cell">
@@ -3580,6 +3597,24 @@ F-statistic: 158.5 on 2 and 125 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 </div>
 <p>Po přidání původu se koeficient roční teploty změní z -0.00913 na 0.00149 mm na 1 °C. První model popisuje celkový vztah napříč oblastmi. Druhý porovnává populace stejného statusu původu. Ani jeden koeficient není „ten jediný pravý“; odpovídají na jiné otázky.</p>
+<div class="callout-extra callout callout-style-default callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-18-contents" aria-controls="callout-18" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Poznámka</span>Doplňující: přidat další prediktor není vždy správná kontrola
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-18" class="callout-18-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Další prediktor má smysl přidat podle biologické otázky a představy o tom, jak proměnné vznikly. Při <a class="glossary" href>konfundování<span class="def">Jev, kdy zdánlivý efekt jednoho prediktoru je (zcela nebo zčásti) způsoben třetí proměnnou korelující s oběma.</span></a> ovlivňuje třetí proměnná prediktor i <a class="glossary" href>odezvu<span class="def">Proměnná, jejíž variabilitu se snažíme vysvětlit nebo předpovědět; v notaci modelu y ~ x je odezva y.</span></a>, takže jejich celková asociace mísí více cest. Zohlednění takové proměnné může otázku zpřesnit.</p>
+<p>Jiná situace nastane, když doplníme <strong>prostřední článek</strong> mechanismu. Pokud hnojení mění obsah dusíku v listu a ten následně růst, kontrola dusíku odstraní část účinku hnojení a položí užší otázku o přímé cestě. Ještě opatrnější musíme být u <strong>společného následku</strong> dvou proměnných: výběr pouze přeživších jedinců může vytvořit asociaci mezi vlastnostmi, které ovlivňují přežití, i když spolu v původní populaci nesouvisely. <!-- TODO: add slugs mediator and collider to pojmy.yaml --></p>
+<p>Pravidlo „přidejte do modelu vše, co máte“ proto nechrání automaticky před zkreslením. Model popisuje podmíněné vztahy; kauzální význam vyžaduje navíc znalost uspořádání studie a biologického mechanismu.</p>
+</div>
+</div>
+</div>
 </section>
 </section>
 <section id="jak-model-odhadne-tloušťku-při-stejné-teplotě" class="level2" data-number="10">
@@ -3744,7 +3779,7 @@ Confidence level used: 0.95 </code></pre>
 </div>
 </div>
 <div class="callout-extra callout callout-style-default callout-note no-icon callout-titled">
-<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-18-contents" aria-controls="callout-18" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-20-contents" aria-controls="callout-20" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon no-icon"></i>
 </div>
@@ -3753,7 +3788,7 @@ Confidence level used: 0.95 </code></pre>
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
-<div id="callout-18" class="callout-18-contents callout-collapse collapse">
+<div id="callout-20" class="callout-20-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>nova_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
@@ -3929,7 +3964,7 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 </div>
 </div>
 <div class="callout-extra callout callout-style-default callout-note no-icon callout-titled">
-<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-22-contents" aria-controls="callout-22" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-24-contents" aria-controls="callout-24" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon no-icon"></i>
 </div>
@@ -3938,7 +3973,7 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
-<div id="callout-22" class="callout-22-contents callout-collapse collapse">
+<div id="callout-24" class="callout-24-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>Pokud chceme každý prediktor testovat po zohlednění všech ostatních prediktorů v aditivním modelu, můžeme použít testy typu II z funkce <code>car::Anova()</code>. Na rozdíl od sekvenčních testů z <code>anova()</code> nepřidělují sdílenou informaci podle pořadí členů ve formuli.</p>
 <div class="cell">
