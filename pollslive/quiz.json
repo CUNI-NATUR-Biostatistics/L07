@@ -12,16 +12,16 @@
       "text": "V modelu hmotnost_tela_g ~ druh je referenční skupinou Adélie. Co znamená intercept?",
       "options": [
         {
-          "id": "adelie-mean",
-          "label": "Odhadnutou průměrnou hmotnost Adélií."
-        },
-        {
           "id": "all-species-mean",
           "label": "Průměrnou hmotnost všech tří druhů dohromady."
         },
         {
           "id": "gentoo-difference",
           "label": "Rozdíl mezi Gentoo a Adéliemi."
+        },
+        {
+          "id": "adelie-mean",
+          "label": "Odhadnutou průměrnou hmotnost Adélií."
         },
         {
           "id": "f-statistic",
@@ -74,16 +74,16 @@
           "label": "Všechny tři dvojice druhů se navzájem liší."
         },
         {
-          "id": "at-least-one-mean",
-          "label": "Alespoň jeden druhový průměr se liší od některého dalšího."
-        },
-        {
           "id": "which-pair",
           "label": "Víme, která konkrétní dvojice se liší, bez dalšího porovnání."
         },
         {
           "id": "causal-proof",
           "label": "Druh tučňáka je prokázanou příčinou rozdílu hmotnosti."
+        },
+        {
+          "id": "at-least-one-mean",
+          "label": "Alespoň jeden druhový průměr se liší od některého dalšího."
         }
       ],
       "correctOptionId": "at-least-one-mean",
