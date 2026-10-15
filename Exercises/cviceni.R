@@ -134,15 +134,15 @@ if (
 # Vaše řešení:
 #
 #
+# Nápověda 1: Oddělte technickou kontrolu tabulky od otázky,
+# co biologicky představuje jeden její řádek.
+# Nápověda 2: Použijte nrow(), ncol(), names(), colSums()
+# spolu s is.na(), factor() s argumentem levels a table().
 # Očekávaný výsledek: Tabulka má 128 řádků a 14 sloupců.
 # V uvedených čtyřech sloupcích nic nechybí. Faktor má
 # 55 původních a 73 zavlečených populací; referencí je
 # Puvodni. Odezvou je populační průměr tloušťky listu v mm.
 # Jeden řádek a jedna jednotka analýzy jsou jedna populace.
-# Nápověda 1: Oddělte technickou kontrolu tabulky od otázky,
-# co biologicky představuje jeden její řádek.
-# Nápověda 2: Použijte nrow(), ncol(), names(), colSums()
-# spolu s is.na(), factor() s argumentem levels a table().
 # Interpretace: Proč by 128 řádků nebylo správné popsat jako
 # 128 nezávislých jednotlivých rostlin?
 
@@ -172,15 +172,15 @@ if (
 # Vaše řešení:
 #
 #
-# Očekávaný výsledek: Sklon je přibližně −0,00913 mm/°C
-# a jeho 95% interval je přibližně −0,01081 až −0,00746.
-# Rozdíl 5 °C odpovídá odhadované změně asi −0,0457 mm.
-# Graf klesá a rezidua neukazují výrazný oblouk nebo trychtýř.
 # Nápověda 1: Nejprve zobrazte pozorování, potom fitujte model
 # a stejný model použijte pro přímku i diagnostiku.
 # Nápověda 2: Použijte plot(), lm(), abline(), summary(),
 # confint(), fitted() a resid(); nulovou čáru přidejte
 # pomocí abline() s argumenty h = 0 a lty = 2.
+# Očekávaný výsledek: Sklon je přibližně −0,00913 mm/°C
+# a jeho 95% interval je přibližně −0,01081 až −0,00746.
+# Rozdíl 5 °C odpovídá odhadované změně asi −0,0457 mm.
+# Graf klesá a rezidua neukazují výrazný oblouk nebo trychtýř.
 # Interpretace: Popisuje sklon příčinný účinek teploty,
 # nebo celkovou asociaci mezi populacemi?
 
@@ -228,15 +228,15 @@ coef(object = mod_priklad)
 # Vaše řešení:
 #
 #
+# Nápověda 1: Každý koeficient odpovídá porovnání, ve kterém
+# ostatní prediktor modelu zůstává stejný.
+# Nápověda 2: V lm() uveďte oba názvy napravo od ~ oddělené
+# znakem +; hodnoty čtěte v příslušných řádcích summary().
 # Očekávaný výsledek: Při stejném maximu je koeficient roční
 # teploty asi −0,00528 mm/°C. Při stejné roční teplotě je
 # koeficient maxima asi −0,00475 mm/°C. Znaménko + přidává
 # oba příspěvky do jednoho aditivního modelu; nedovoluje,
 # aby se sklon jednoho prediktoru měnil s druhým prediktorem.
-# Nápověda 1: Každý koeficient odpovídá porovnání, ve kterém
-# ostatní prediktor modelu zůstává stejný.
-# Nápověda 2: V lm() uveďte oba názvy napravo od ~ oddělené
-# znakem +; hodnoty čtěte v příslušných řádcích summary().
 # Interpretace: Proč tyto dva koeficienty nejsou dvě původní
 # jednoprediktorové přímky vložené vedle sebe?
 
@@ -264,15 +264,15 @@ coef(object = mod_priklad)
 # Vaše řešení:
 #
 #
+# Nápověda 1: Spojte tvar mraku dvou teplot s tím, kolik
+# nezávislé informace každá z nich přináší modelu.
+# Nápověda 2: Použijte plot(), cor() a sloupce Estimate
+# a Std. Error v obou úplných tabulkách koeficientů.
 # Očekávaný výsledek: Korelace je přibližně 0,855. Odhad
 # roční teploty se změní z −0,00913 na −0,00528 mm/°C
 # a standardní chyba vzroste přibližně z 0,00085 na 0,00159.
 # Prediktory nesou překrývající se klimatickou informaci,
 # takže jejich samostatné příspěvky se oddělují méně přesně.
-# Nápověda 1: Spojte tvar mraku dvou teplot s tím, kolik
-# nezávislé informace každá z nich přináší modelu.
-# Nápověda 2: Použijte plot(), cor() a sloupce Estimate
-# a Std. Error v obou úplných tabulkách koeficientů.
 # Interpretace: Proč změna koeficientu sama neznamená,
 # že jeden model je správný a druhý chybný?
 
@@ -322,13 +322,6 @@ typy_car_puvodu <-
 # Vaše řešení:
 #
 #
-# Očekávaný výsledek: Referencí jsou původní populace.
-# Zavlečené populace mají při stejné roční teplotě odhad
-# tloušťky vyšší asi o 0,10895 mm. Společný sklon je asi
-# +0,00149 mm/°C a jeho 95% interval přibližně −0,00091
-# až +0,00389. Graf ukazuje dvě rovnoběžné přímky se stejným
-# sklonem a různou výškou; symboly a typy čar rozlišují skupiny
-# i bez barevného zobrazení.
 # Nápověda 1: Skupinový koeficient porovnává skupiny při
 # stejné teplotě; teplotní koeficient porovnává teploty
 # při stejném původu.
@@ -336,6 +329,13 @@ typy_car_puvodu <-
 # Obě abline() mají stejný argument b; pro zavlečené populace
 # přičtěte skupinový koeficient k argumentu a. Legendě předejte
 # stejné barvy, symboly a typy čar.
+# Očekávaný výsledek: Referencí jsou původní populace.
+# Zavlečené populace mají při stejné roční teplotě odhad
+# tloušťky vyšší asi o 0,10895 mm. Společný sklon je asi
+# +0,00149 mm/°C a jeho 95% interval přibližně −0,00091
+# až +0,00389. Graf ukazuje dvě rovnoběžné přímky se stejným
+# sklonem a různou výškou; symboly a typy čar rozlišují skupiny
+# i bez barevného zobrazení.
 # Interpretace: Jak se otázka společného sklonu liší od
 # celkového sklonu napříč oběma skupinami v U02?
 
@@ -384,16 +384,16 @@ predict(
 # Vaše řešení:
 #
 #
-# Očekávaný výsledek: Rozsahy jsou 12,15–19,95 °C pro
-# původní a 5,95–16,35 °C pro zavlečené populace; překryv
-# je 12,15–16,35 °C. Při 14 °C jsou odhady asi 0,3323
-# a 0,4412 mm. Rozdíl 0,10895 mm se rovná skupinovému
-# koeficientu; oba intervaly popisují nejistotu průměru.
 # Nápověda 1: Dolní mez překryvu je vyšší z obou dolních
 # mezí a horní mez je nižší z obou horních mezí.
 # Nápověda 2: Vytvořte data.frame() se sloupci puvod
 # a teplota_rocni_C; v predict() nastavte newdata
 # a interval = "confidence".
+# Očekávaný výsledek: Rozsahy jsou 12,15–19,95 °C pro
+# původní a 5,95–16,35 °C pro zavlečené populace; překryv
+# je 12,15–16,35 °C. Při 14 °C jsou odhady asi 0,3323
+# a 0,4412 mm. Rozdíl 0,10895 mm se rovná skupinovému
+# koeficientu; oba intervaly popisují nejistotu průměru.
 # Interpretace: Proč by teplota mimo společný rozsah byla
 # slabším podkladem pro porovnání původu?
 
@@ -423,15 +423,15 @@ predict(
 # Vaše řešení:
 #
 #
+# Nápověda 1: Před porovnáním koeficientů je seřaďte podle
+# jejich názvů; pořadí řádků ve dvou výstupech není stejné.
+# Nápověda 2: Použijte sort(coef()), fitted(), max(), abs()
+# a dvě samostatná volání anova().
 # Očekávaný výsledek: Odpovídající koeficienty a fitted
 # hodnoty jsou stejné až na numerické zaokrouhlení. Když je
 # roční teplota první, součty čtverců jsou asi 0,20170
 # a 0,01327; při opačném pořadí asi 0,19679 a 0,01817.
 # Sekvenční F a p se změní, fit modelu ani testy koeficientů ne.
-# Nápověda 1: Před porovnáním koeficientů je seřaďte podle
-# jejich názvů; pořadí řádků ve dvou výstupech není stejné.
-# Nápověda 2: Použijte sort(coef()), fitted(), max(), abs()
-# a dvě samostatná volání anova().
 # Interpretace: Proč přehazování pořadí není způsob,
 # jak hledat příznivější p-hodnotu?
 
@@ -458,17 +458,17 @@ predict(
 # Vaše řešení:
 #
 #
+# Nápověda 1: Uspořádejte závěr od biologické otázky přes
+# odhady a nejistotu k omezením zobecnění.
+# Nápověda 2: Koeficienty vezměte z coef(), intervaly
+# z confint(); na osy diagnostiky předejte fitted(mod_puvod)
+# a resid(mod_puvod), potom použijte abline(h = 0, lty = 2).
 # Očekávaný výsledek: Celkový sklon je asi −0,00913 mm/°C,
 # ale při stejném původu asi +0,00149 mm/°C a jeho interval
 # obsahuje nulu. Zavlečené populace mají při stejné teplotě
 # odhad asi o 0,10895 mm vyšší. Změna není rozpor: modely
 # odpovídají na jinou otázku. Závěr se týká asociací mezi
 # 128 zdrojovými populacemi, nikoli prokázaného účinku klimatu.
-# Nápověda 1: Uspořádejte závěr od biologické otázky přes
-# odhady a nejistotu k omezením zobecnění.
-# Nápověda 2: Koeficienty vezměte z coef(), intervaly
-# z confint(); na osy diagnostiky předejte fitted(mod_puvod)
-# a resid(mod_puvod), potom použijte abline(h = 0, lty = 2).
 # Interpretace: Který údaj ukazuje, že původ a roční teplota
 # nesou v tomto souboru částečně propojenou informaci?
 
@@ -496,15 +496,15 @@ predict(
 # Vaše řešení:
 #
 #
+# Nápověda 1: Nejprve vytvořte datový rámec obsahující pouze
+# osm číselných klimatických proměnných.
+# Nápověda 2: Sloupce vyberte vektorovým indexem a použijte
+# cor() následované round() s digits = 2.
 # Očekávaný výsledek: Matice je 8 × 8 a je souměrná.
 # Roční a maximální teplota mají korelaci asi +0,85.
 # Sezonnost teploty a minimum nejchladnějšího měsíce mají
 # zápornou korelaci asi −0,64. Více dvojic tedy nese výrazně
 # překrývající se klimatickou informaci.
-# Nápověda 1: Nejprve vytvořte datový rámec obsahující pouze
-# osm číselných klimatických proměnných.
-# Nápověda 2: Sloupce vyberte vektorovým indexem a použijte
-# cor() následované round() s digits = 2.
 # Interpretace: Proč by model se všemi osmi prediktory nebyl
 # automaticky nejlépe interpretovatelný?
 
@@ -525,15 +525,15 @@ predict(
 # Vaše řešení:
 #
 #
-# Očekávaný výsledek: predict() vrátí čísla a intervaly
-# pro oba řádky. První bod leží uvnitř pozorovaného mraku,
-# zatímco kombinace 7 a 33 leží daleko od něj, i když obě
-# jednotlivé hodnoty spadají do rozsahů svých proměnných.
 # Nápověda 1: Podpora více prediktorů závisí na jejich
 # společné kombinaci, ne jen na každém rozsahu samostatně.
 # Nápověda 2: Nejprve zavolejte plot() s oběma sloupci
 # data_kridlatka, teprve potom points() pro nové scénáře;
 # predict() potřebuje oba sloupce v argumentu newdata.
+# Očekávaný výsledek: predict() vrátí čísla a intervaly
+# pro oba řádky. První bod leží uvnitř pozorovaného mraku,
+# zatímco kombinace 7 a 33 leží daleko od něj, i když obě
+# jednotlivé hodnoty spadají do rozsahů svých proměnných.
 # Interpretace: Co musíte před biologickým výkladem predikce
 # zkontrolovat kromě jejího intervalu spolehlivosti?
 
@@ -551,15 +551,15 @@ predict(
 # Vaše řešení:
 #
 #
-# Očekávaný výsledek: Prosté průměry jsou asi 0,3370
-# a 0,4348 mm, rozdíl přibližně 0,0977 mm. Modelový rozdíl
-# při stejné teplotě je asi 0,10895 mm. Odpovídají na dvě
-# různé otázky, protože skupiny nemají stejné teplotní rozložení.
 # Nápověda 1: Prostý průměr používá pozorované složení každé
 # skupiny; modelové porovnání nastavuje stejnou teplotu.
 # Nápověda 2: Vyberte hodnoty logickým indexem a použijte
 # mean(). V obou porovnáních odečtěte hodnotu původních
 # populací od hodnoty zavlečených populací.
+# Očekávaný výsledek: Prosté průměry jsou asi 0,3370
+# a 0,4348 mm, rozdíl přibližně 0,0977 mm. Modelový rozdíl
+# při stejné teplotě je asi 0,10895 mm. Odpovídají na dvě
+# různé otázky, protože skupiny nemají stejné teplotní rozložení.
 # Interpretace: Které porovnání odpovídá koeficientu
 # puvodZavleceny a proč?
 
@@ -578,14 +578,14 @@ predict(
 # Vaše řešení:
 #
 #
-# Očekávaný výsledek: Intercept a zápis skupinového rozdílu
-# se změní; skupinový koeficient bude mít opačné znaménko.
-# Společný sklon a fitted hodnoty zůstanou stejné až na
-# numerické zaokrouhlení. Data ani fit modelu se nezměnily.
 # Nápověda 1: Změna reference mění souřadnice popisu modelu,
 # nikoli odhadnutou přímku pro každou populaci.
 # Nápověda 2: V relevel() použijte ref = "Zavleceny";
 # fitted hodnoty porovnejte pomocí max() a abs().
+# Očekávaný výsledek: Intercept a zápis skupinového rozdílu
+# se změní; skupinový koeficient bude mít opačné znaménko.
+# Společný sklon a fitted hodnoty zůstanou stejné až na
+# numerické zaokrouhlení. Data ani fit modelu se nezměnily.
 # Interpretace: Proč znaménko skupinového koeficientu nelze
 # číst bez znalosti referenční skupiny?
 
@@ -603,14 +603,14 @@ predict(
 # Vaše řešení:
 #
 #
-# Očekávaný výsledek: Najdete jednu populaci s nejvyšší
-# Cookovou vzdáleností. Samotná vysoká hodnota nedokazuje
-# chybu; je důvodem ověřit zdrojové údaje a zjistit, proč má
-# pozorování vliv, nikoli důvodem k automatickému vyřazení.
 # Nápověda 1: Hledejte pozorování, jehož vynechání by nejvíce
 # změnilo odhady modelu, a oddělte vliv od datové chyby.
 # Nápověda 2: Použijte cooks.distance(), which.max()
 # a index řádku pro výběr sloupce populace.
+# Očekávaný výsledek: Najdete jednu populaci s nejvyšší
+# Cookovou vzdáleností. Samotná vysoká hodnota nedokazuje
+# chybu; je důvodem ověřit zdrojové údaje a zjistit, proč má
+# pozorování vliv, nikoli důvodem k automatickému vyřazení.
 # Interpretace: Jak by svévolné odstranění pozorování mohlo
 # změnit vědeckou otázku nebo závěr?
 
@@ -629,15 +629,15 @@ predict(
 # Vaše odpověď:
 #
 #
+# Nápověda 1: Rozlište složitost modelu, formulaci otázky
+# a sílu příčinného tvrzení.
+# Nápověda 2: Pro A použijte U04, pro B U02 a U08 a pro C
+# jednotku analýzy a omezení formulovaná v U08.
 # Očekávaný výsledek: A) Prediktory musí vycházet z biologické
 # otázky a mohou přidávat překrývající se informaci. B) Modely
 # mohou odpovídat na různé celkové a podmíněné otázky.
 # C) Statistická asociace v observačních datech sama neprokazuje
 # příčinu; společná zahrada neodstraňuje historii populací.
-# Nápověda 1: Rozlište složitost modelu, formulaci otázky
-# a sílu příčinného tvrzení.
-# Nápověda 2: Pro A použijte U04, pro B U02 a U08 a pro C
-# jednotku analýzy a omezení formulovaná v U08.
 # Interpretace: Které z tvrzení by mohlo vést k nejzávažnějšímu
 # biologickému omylu a proč?
 
