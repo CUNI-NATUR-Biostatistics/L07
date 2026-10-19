@@ -11,9 +11,27 @@ expected_hashes <- c(
     "1b70d6eabdcefe166cc0357734fb7c1b1cc1cb9682c0dd16e97f2693bc849fdf",
   "pollslive/assets/l06-three-species-means.png" =
     "0c2cc9c10223440035d6311d54fefda1ab21465f3f04577d2087d9a457a8216a",
-  "pollslive/assets/l06-f-distribution-showcase.png" =
-    "0e62fda07472cddc04f38d28ea4b30c093d62fbd3c1326b6d9a6bfd3511c27f1"
+  "pollslive/assets/l06-posthoc-species-intervals.png" =
+    "efd1659c9c4e29e8b9c45dd9a27326a0451fb3048c0131307913a90a6f2d0896"
 )
+
+# The L06 Tukey interval figure is copied byte for byte from the L06
+#   repository when it is available next to this one.
+path_l06_posthoc <-
+  here::here(
+    "..", "L06", "Presentation", "Materials", "posthoc_species_intervals.png"
+  )
+
+if (
+  file.exists(path_l06_posthoc)
+) {
+  res_copy <-
+    file.copy(
+      from = path_l06_posthoc,
+      to = here::here(output_dir, "l06-posthoc-species-intervals.png"),
+      overwrite = TRUE
+    )
+}
 
 for (relative_path in names(expected_hashes)) {
   absolute_path <- here::here(relative_path)
