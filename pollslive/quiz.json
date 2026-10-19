@@ -8,90 +8,90 @@
   "title": "L07 – Opakování předchozí lekce – 2026/27",
   "questions": [
     {
-      "id": "reference-mean",
-      "text": "V modelu hmotnost_tela_g ~ druh je referenční skupinou Adélie. Co znamená intercept?",
+      "id": "gentoo-minus-chinstrap",
+      "text": "O kolik je podle modelu průměrná hmotnost Gentoo vyšší než průměrná hmotnost Chinstrap?",
       "options": [
         {
-          "id": "all-species-mean",
-          "label": "Průměrnou hmotnost všech tří druhů dohromady."
+          "id": "asi-1375",
+          "label": "Asi o 1 375 g"
         },
         {
-          "id": "gentoo-difference",
-          "label": "Rozdíl mezi Gentoo a Adéliemi."
+          "id": "asi-1408",
+          "label": "Asi o 1 408 g"
         },
         {
-          "id": "adelie-mean",
-          "label": "Odhadnutou průměrnou hmotnost Adélií."
+          "id": "nelze-z-tabulky",
+          "label": "Nelze, tabulka tento rozdíl neobsahuje"
         },
         {
-          "id": "f-statistic",
-          "label": "Hodnotu celkového F-testu."
+          "id": "asi-1343",
+          "label": "Asi o 1 343 g"
         }
       ],
-      "correctOptionId": "adelie-mean",
-      "explanation": "Při referenci Adélie představuje intercept její odhadnutý průměr; v datech L06 je přibližně 3 701 g.",
+      "correctOptionId": "asi-1343",
+      "explanation": "Oba koeficienty jsou rozdíly od Adélií: 1 375 − 32 ≈ 1 343 g. Samotný odhad rozdílu z tabulky spočítáme; pro jeho SE a test bychom potřebovali jinou referenci nebo párové porovnání.",
+      "media": {
+        "path": "assets/l06-species-coefficients.png",
+        "alt": "Karta koeficientů modelu hmotnosti těla podle druhu s referencí Adélie: odhadnutý průměr Adélií 3 701 g, koeficient Chinstrap plus 32 g a koeficient Gentoo plus 1 375 g.",
+        "provenance": "Deterministically rendered by R/render_pollslive_assets.R from a byte-identical copy of approved L06 data/palmer_penguins.csv (SHA-256 1B70D6EABDCEFE166CC0357734FB7C1B1CC1CB9682C0DD16E97F2693BC849FDF) using lm(hmotnost_tela_g ~ druh) with Adelie as reference; checksum pinned in R/verify_pollslive_assets.R."
+      }
+    },
+    {
+      "id": "zmena-reference-na-gentoo",
+      "text": "S referencí Adélie je intercept 3 701 g a druhGentoo +1 375 g. Jaký intercept a druhAdelie dostaneme s referencí Gentoo?",
+      "options": [
+        {
+          "id": "beze-zmeny",
+          "label": "3 701 g a +1 375 g"
+        },
+        {
+          "id": "gentoo-zaporny",
+          "label": "5 076 g a −1 375 g"
+        },
+        {
+          "id": "gentoo-kladny",
+          "label": "5 076 g a +1 375 g"
+        },
+        {
+          "id": "prohozene",
+          "label": "1 375 g a −3 701 g"
+        }
+      ],
+      "correctOptionId": "gentoo-zaporny",
+      "explanation": "Intercept je průměr nové reference: 3 701 + 1 375 ≈ 5 076 g. Koeficient Adélií je rozdíl Adélie − Gentoo, tedy −1 375 g. Skupinové průměry ani celkový test se nezmění.",
       "media": {
         "path": "assets/l06-three-species-means.png",
-        "alt": "Bodový graf hmotnosti těla tří druhů tučňáků se zvýrazněnými průměry; průměr Adélií je přibližně 3 700 g.",
+        "alt": "Bodový graf hmotnosti těla tří druhů tučňáků se zvýrazněnými průměry; průměr Adélií je přibližně 3 700 g, Chinstrap podobný a Gentoo přibližně 5 100 g.",
         "provenance": "Byte-identical copy of approved L06 Presentation/Materials/three_species_means.png; SHA-256 0C2CC9C10223440035D6311D54FEFDA1AB21465F3F04577D2087D9A457A8216A; verified by R/render_pollslive_assets.R."
       }
     },
     {
-      "id": "difference-from-reference",
-      "text": "Koeficient druhGentoo ve stejném modelu je přibližně +1 375 g. Jak ho číst?",
+      "id": "zaver-parovych-porovnani",
+      "text": "Graf ukazuje párová porovnání s Tukeyho úpravou; Chinstrap − Adélie je +32 g, interval [−127; 191] g. Který závěr platí?",
       "options": [
         {
-          "id": "gentoo-mean",
-          "label": "Gentoo mají podle modelu průměr přibližně 1 375 g."
+          "id": "vsechny-se-lisi",
+          "label": "Všechny tři druhy se liší, protože celkový F-test je významný."
         },
         {
-          "id": "gentoo-vs-adelie",
-          "label": "Odhadnutý průměr Gentoo je přibližně o 1 375 g vyšší než průměr Adélií."
+          "id": "stejna-hmotnost",
+          "label": "Chinstrap a Adélie mají podle dat stejnou průměrnou hmotnost."
         },
         {
-          "id": "every-penguin",
-          "label": "Každý jednotlivý tučňák Gentoo váží přesně o 1 375 g více než Adélie."
+          "id": "gentoo-tezsi",
+          "label": "Gentoo jsou těžší než oba druhy; Chinstrap a Adélie data nerozliší."
         },
         {
-          "id": "gentoo-vs-chinstrap",
-          "label": "Gentoo jsou o 1 375 g těžší než Chinstrap."
+          "id": "prokazany-rozdil",
+          "label": "Chinstrap jsou o 32 g těžší než Adélie, rozdíl je tedy prokázaný."
         }
       ],
-      "correctOptionId": "gentoo-vs-adelie",
-      "explanation": "Koeficient druhu je rozdíl jeho odhadnutého průměru vůči referenci Adélie, nikoli samostatný průměr ani rozdíl každé dvojice jedinců.",
+      "correctOptionId": "gentoo-tezsi",
+      "explanation": "Oba intervaly s Gentoo leží daleko od nuly. Interval Chinstrap − Adélie nulu obsahuje: rozdíl data neodliší od nuly, ale ani nedokazují, že je nulový.",
       "media": {
-        "path": "assets/l06-species-coefficients.png",
-        "alt": "Graf koeficientů modelu s referencí Adélie: intercept přibližně 3 701 g, koeficient Chinstrap plus 32 g a koeficient Gentoo plus 1 375 g.",
-        "provenance": "Deterministically rendered by R/render_pollslive_assets.R from a byte-identical copy of approved L06 data/palmer_penguins.csv (SHA-256 1B70D6EABDCEFE166CC0357734FB7C1B1CC1CB9682C0DD16E97F2693BC849FDF) using lm(hmotnost_tela_g ~ druh) with Adelie as reference."
-      }
-    },
-    {
-      "id": "overall-f-test",
-      "text": "Celkový F-test modelu se třemi druhy dal velmi malou p-hodnotu. Co z něj plyne přímo?",
-      "options": [
-        {
-          "id": "all-pairs",
-          "label": "Všechny tři dvojice druhů se navzájem liší."
-        },
-        {
-          "id": "which-pair",
-          "label": "Víme, která konkrétní dvojice se liší, bez dalšího porovnání."
-        },
-        {
-          "id": "causal-proof",
-          "label": "Druh tučňáka je prokázanou příčinou rozdílu hmotnosti."
-        },
-        {
-          "id": "at-least-one-mean",
-          "label": "Alespoň jeden druhový průměr se liší od některého dalšího."
-        }
-      ],
-      "correctOptionId": "at-least-one-mean",
-      "explanation": "Které dvojice se liší, určí až párová porovnání. Samotné srovnání druhů neprokazuje příčinu.",
-      "media": {
-        "path": "assets/l06-f-distribution-showcase.png",
-        "alt": "Graf nulového F-rozdělení a velmi vzdálené pozorované hodnoty F 343,6 s p-hodnotou menší než 0,001.",
-        "provenance": "Byte-identical copy of approved L06 Presentation/Materials/f_distribution_showcase.png; SHA-256 0E62FDA07472CDDC04F38D28EA4B30C093D62FBD3C1326B6D9A6BFD3511C27F1; verified by R/render_pollslive_assets.R."
+        "path": "assets/l06-posthoc-species-intervals.png",
+        "alt": "Graf tří párových rozdílů hmotnosti s Tukeyho intervaly: Chinstrap − Adélie kolem nuly s intervalem přes nulu, Gentoo − Chinstrap a Gentoo − Adélie kolem 1 350 g daleko od nuly.",
+        "provenance": "Byte-identical copy of approved L06 Presentation/Materials/posthoc_species_intervals.png (emmeans revpairwise contrasts with Tukey adjustment); SHA-256 EFD1659C9C4E29E8B9C45DD9A27326A0451FB3048C0131307913A90A6F2D0896; verified by R/render_pollslive_assets.R and R/verify_pollslive_assets.R."
       }
     }
   ]
