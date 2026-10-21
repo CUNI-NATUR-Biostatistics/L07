@@ -229,7 +229,7 @@ Po absolvování této přednášky budete schopni:
 
 ::: columns
 ::: {.column width="48%" .fragment}
-### Číselný prediktor
+### Numerický prediktor
 
 $$
 \text{odezva} = \beta_0 + \beta_1 x + \varepsilon
@@ -489,7 +489,7 @@ p_rocni_model <-
 #| eval: true
 #| message: false
 #| warning: false
-#| fig-alt: "Bodový graf s regresní přímkou ukazuje záporný sklon vztahu mezi průměrnou teplotou a tloušťkou listů."
+#| fig-alt: "Bodový graf s odhadnutou přímkou ukazuje záporný sklon vztahu mezi průměrnou teplotou a tloušťkou listů."
 p_rocni_model
 ```
 :::
@@ -563,7 +563,7 @@ p_residua <-
   ) +
   ggplot2::labs(
     x = "Residuum (mm)",
-    y = "Frekvence"
+    y = "Četnost"
   ) +
   theme_l07
 ```
@@ -580,7 +580,7 @@ p_residua <-
 #| eval: true
 #| message: false
 #| warning: false
-#| fig-alt: "Graf residuí proti odhadnutým hodnotám: bez trychtýře, ale residua leží při nízkých až středních odhadech spíš pod nulou a potom nad ní."
+#| fig-alt: "Graf residuí proti odhadnutým hodnotám: bez vějíře, ale residua leží při nízkých až středních odhadech spíš pod nulou a potom nad ní."
 p_fitted_residua
 ```
 :::
@@ -595,7 +595,7 @@ p_fitted_residua
 #| eval: true
 #| message: false
 #| warning: false
-#| fig-alt: "Histogram residuí ukazuje, že většina residuí je kolem nuly a jejich rozložení je přibližně symetrické."
+#| fig-alt: "Histogram residuí ukazuje, že většina residuí je kolem nuly a jejich rozdělení je přibližně symetrické."
 p_residua
 ```
 :::
@@ -603,7 +603,7 @@ p_residua
 ::::
 
 ::: {.takeaway-strip .fragment}
-Hledáme náhodný mrak kolem nuly — bez oblouku, vln, trychtýře nebo samostatných pásů.
+Hledáme náhodný mrak kolem nuly — bez oblouku, vln, vějíře nebo samostatných pásů.
 :::
 
 ::: {.fragment}
@@ -611,7 +611,7 @@ Při nízkých až středních odhadech leží residua spíš pod nulou, potom n
 :::
 
 ::: {.notes}
-Oblouk ani trychtýř tu nevidíme, ale residua nejsou úplně náhodná. Otázku nechte otevřenou; odpověď přinese původ populací.
+Oblouk ani vějíř tu nevidíme, ale residua nejsou úplně náhodná. Otázku nechte otevřenou; odpověď přinese původ populací.
 :::
 
 ## Také nejteplejší měsíc souvisí s tloušťkou listu
@@ -955,7 +955,7 @@ druhý příspěvek
 
 ::: {.fragment .text-size-large .text-color-indigo_velvet}
 $$
-\widehat{y} = \hat\beta_0 + \hat\beta_1 x_1 + \hat\beta_2 x_2
+\hat{y} = \hat{\beta}_0 + \hat{\beta}_1 x_1 + \hat{\beta}_2 x_2
 $$
 :::
 
@@ -1242,7 +1242,7 @@ p_porovnani <-
 #| eval: true
 #| message: false
 #| warning: false
-#| fig-alt: "Dva bodové odhady koeficientu průměrné teploty s intervaly nejistoty porovnávají samostatný a vícenásobný model."
+#| fig-alt: "Dva bodové odhady koeficientu průměrné teploty s intervaly nejistoty porovnávají samostatný model a model s více prediktory."
 p_porovnani
 ```
 :::
@@ -1439,7 +1439,7 @@ nazvy_puvodu <- c(
   "teplota_rocni_C" = "průměrná teplota (mm / °C)"
 )
 role_puvodu <- c(
-  "(Intercept)" = "průměr reference",
+  "(Intercept)" = "průměr referenční skupiny",
   "puvodZavlečené" = "rozdíl skupin",
   "teplota_rocni_C" = "společný sklon"
 )
@@ -1521,7 +1521,7 @@ p_skupiny_model <-
 #| eval: true
 #| message: false
 #| warning: false
-#| fig-alt: "Dvě rovnoběžné regresní přímky ukazují společný sklon a rozdílnou výšku pro původní a zavlečené populace."
+#| fig-alt: "Dvě rovnoběžné odhadnuté přímky ukazují společný sklon a rozdílnou výšku pro původní a zavlečené populace."
 p_skupiny_model
 ```
 
