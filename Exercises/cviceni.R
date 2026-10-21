@@ -73,12 +73,12 @@
 # skupinou, intervalem spolehlivosti a funkcí anova(). Pokud
 # tyto pojmy znáte, následující připomenutí přeskočte:
 # - intercept je odhad pro referenční skupinu při nulových
-#   hodnotách číselných prediktorů;
+#   hodnotách numerických prediktorů;
 # - skupinový koeficient je rozdíl vůči referenční skupině;
 # - interval spolehlivosti vyjadřuje nejistotu odhadu;
 # - test koeficientu se ptá na jeden koeficient při zohlednění
 #   ostatních prediktorů v modelu;
-# - residuum je pozorovaná hodnota minus odhad modelu.
+# - residuum je pozorovaná hodnota minus odhadnutá hodnota.
 
 
 #--------------------------------------------------#
@@ -171,8 +171,9 @@ if (
 # roční teplotě. Popište obě osy včetně jednotek. Fitujte mod_rocni_teplota
 # s odezvou tloustka_listu_mm a prediktorem teplota_rocni_C. Přidejte do
 # grafu přímku pomocí abline(), zobrazte summary(), confint(). Potom
-# samostatně vykreslete fitted hodnoty proti residuím s českými popisky os v
-# mm a vodorovnou čárou v nule. Vyložte sklon na 1 °C i na rozdíl 5 °C.
+# samostatně vykreslete odhadnuté hodnoty (fitted()) proti residuím
+# s českými popisky os v mm a vodorovnou čárou v nule. Vyložte sklon
+# na 1 °C i na rozdíl 5 °C.
 
 # Vaše řešení:
 
@@ -188,7 +189,7 @@ if (
 # Očekávaný výsledek:
 # Sklon je přibližně −0,00913 mm/°C a jeho 95% interval je přibližně
 # −0,01081 až −0,00746. Rozdíl 5 °C odpovídá odhadované změně asi −0,0457
-# mm. Graf klesá a rezidua neukazují výrazný oblouk nebo trychtýř.
+# mm. Graf klesá a residua neukazují výrazný oblouk nebo vějíř.
 #
 # Interpretace:
 # Popisuje sklon příčinný účinek teploty, nebo celkovou asociaci mezi
@@ -334,7 +335,7 @@ typy_car_puvodu <-
 # °C a mm. Skupiny rozlište pomocí barvy_puvodu a symboly_puvodu a přidejte
 # legendu. Fitujte mod_puvod s formulí tloustka_listu_mm ~ puvod +
 # teplota_rocni_C. Zobrazte summary() a confint(). Do grafu přidejte dvě
-# modelové přímky pomocí abline(): první používá intercept a společný sklon,
+# odhadnuté přímky pomocí abline(): první používá intercept a společný sklon,
 # druhá intercept plus puvodZavleceny a stejný sklon. Rozlište je pomocí
 # barvy_puvodu a typy_car_puvodu; stejné znaky použijte také v legendě.
 # Určete referenci a vyložte skupinový rozdíl i společný sklon.
@@ -407,8 +408,8 @@ predict(
 
 
 # Nápověda 1:
-# Dolní mez překryvu je vyšší z obou dolních mezí a horní mez je nižší z
-# obou horních mezí.
+# Dolní hranice překryvu je vyšší z obou dolních hranic a horní hranice
+# je nižší z obou horních hranic.
 #
 # Nápověda 2:
 # Vytvořte data.frame() se sloupci puvod a teplota_rocni_C; v predict()
@@ -458,7 +459,7 @@ predict(
 # anova().
 #
 # Očekávaný výsledek:
-# Odpovídající koeficienty a fitted hodnoty jsou stejné až na numerické
+# Odpovídající koeficienty a odhadnuté hodnoty jsou stejné až na numerické
 # zaokrouhlení. Když je roční teplota první, součty čtverců jsou asi 0,20170
 # a 0,01327; při opačném pořadí asi 0,19679 a 0,01817. Sekvenční F a p se
 # změní, fit modelu ani testy koeficientů ne.
@@ -478,7 +479,7 @@ predict(
 
 # Zadání:
 # Znovu zobrazte koeficient roční teploty a jeho 95% interval z
-# mod_rocni_teplota a mod_puvod. Pro mod_puvod nakreslete fitted hodnoty
+# mod_rocni_teplota a mod_puvod. Pro mod_puvod nakreslete odhadnuté hodnoty
 # proti residuím, obě osy popište česky v mm a přidejte vodorovnou čáru v
 # nule. Potom napište 4–6 vět pro biologa: položte otázku a určete jednotku
 # analýzy; popište celkový a podmíněný teplotní vztah; vyložte rozdíl původu
@@ -533,7 +534,7 @@ predict(
 
 
 # Nápověda 1:
-# Nejprve vytvořte datový rámec obsahující pouze osm číselných klimatických
+# Nejprve vytvořte datový rámec obsahující pouze osm numerických klimatických
 # proměnných.
 #
 # Nápověda 2:
@@ -610,7 +611,7 @@ predict(
 # Očekávaný výsledek:
 # Prosté průměry jsou asi 0,3370 a 0,4348 mm, rozdíl přibližně 0,0977 mm.
 # Modelový rozdíl při stejné teplotě je asi 0,10895 mm. Odpovídají na dvě
-# různé otázky, protože skupiny nemají stejné teplotní rozložení.
+# různé otázky, protože skupiny nemají stejné rozdělení teplot.
 #
 # Interpretace:
 # Které porovnání odpovídá koeficientu puvodZavleceny a proč?
@@ -622,25 +623,25 @@ predict(
 
 # Zadání:
 # Vytvořte data_jina_reference jako kopii data_kridlatka. Funkcí relevel()
-# nastavte Zavleceny jako referenční úroveň puvod a fitujte
+# nastavte Zavleceny jako referenční skupinu puvod a fitujte
 # mod_jina_reference se stejnou formulí jako mod_puvod. Porovnejte
-# koeficienty a největší absolutní rozdíl fitted hodnot obou modelů. Co se
-# změnilo a co zůstalo stejné?
+# koeficienty a největší absolutní rozdíl odhadnutých hodnot obou modelů.
+# Co se změnilo a co zůstalo stejné?
 
 # Vaše řešení:
 
 
 # Nápověda 1:
-# Změna reference mění souřadnice popisu modelu, nikoli odhadnutou přímku
-# pro každou populaci.
+# Změna referenční skupiny mění souřadnice popisu modelu, nikoli
+# odhadnutou přímku pro každou populaci.
 #
 # Nápověda 2:
-# V relevel() použijte ref = "Zavleceny"; fitted hodnoty porovnejte pomocí
-# max() a abs().
+# V relevel() použijte ref = "Zavleceny"; odhadnuté hodnoty (fitted())
+# porovnejte pomocí max() a abs().
 #
 # Očekávaný výsledek:
 # Intercept a zápis skupinového rozdílu se změní; skupinový koeficient bude
-# mít opačné znaménko. Společný sklon a fitted hodnoty zůstanou stejné až na
+# mít opačné znaménko. Společný sklon a odhadnuté hodnoty zůstanou stejné až na
 # numerické zaokrouhlení. Data ani fit modelu se nezměnily.
 #
 # Interpretace:
