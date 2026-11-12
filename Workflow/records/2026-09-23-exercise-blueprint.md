@@ -66,3 +66,48 @@ The release manifest remains unchanged until explicit human approval. A later re
 - A separate read-only exercise reviewer identified four initial findings and one focused follow-up: stale plot state in N02, a missing required parallel-line display, default diagnostic labels, a reversed subtraction hint, an incomplete negative-correlation expectation, and missing axis-label requirements in U05. All were corrected. The final focused re-review reported `No findings.`
 - The planned 68-minute route is plausible but tight, especially U05–U08, and has not been observed with a beginner group. The live exercise URL remains unavailable until explicit human approval and a later release workflow updates `website-release.yml`.
 
+## Revision 2026-11-12 (pre-teaching review)
+
+Trigger: the 2026-11-12 pre-teaching review of L07 against the current `.ai/` guidance. Ondřej Mottl decided to fix every finding, to add the standing practices from earlier lessons, and to accept a longer core route („Accept longer route“, 2026-11-12). Branch: `fix/l07-pre-teaching-review`.
+
+### Changes to `Exercises/cviceni.R`
+
+- Origin colours now use the brand pair of the skripta and deck (`Puvodni` teal `#4E9A8A`, `Zavleceny` terracotta `#C2613A`); finding A2 of the 2026-10-10 review is resolved.
+- Refresher: no lesson codes; the intercept bullet states what the previous lesson taught (mean of the reference group); the bullet on coefficient tests that consider other predictors (L07 content) is removed; a reminder of the overall F-test from `anova()` and of the three residual plots is added. Lesson codes in the closing section are replaced by „následující lekce“ and „pozdější lekce“.
+- Standing practices: U01 adds a histogram of `tloustka_listu_mm` before the summaries; U08 adds the residual histogram and the Q–Q plot of `mod_puvod` with computed expected results and an interpretation prompt; optional N05 adds the 4/n line, the count above it and the leave-one-out slope range. A sixth self-check question asks about the three residual plots.
+- Every core task and N01, N02 and N05 now give numbered steps in `Zadání`.
+- The two „Připomenutí“ blocks are renamed „Ukázka: …“ and each gains one comment on what to notice in the printed output. A new worked example „Ukázka: barvy skupin, přímka a legenda“ before U05 recalls colours indexed by a factor, `abline(a = , b = )` and `legend()` from an earlier practical on the synthetic data; U05 `Zadání` states that the named vectors are indexed with `data_kridlatka$puvod`, and its `Nápověda 2` names the `legend()` arguments.
+- Terminology: „model s více prediktory“, „otázka s jedním prediktorem“, „oblak bodů“, „referenční skupina“, „predikce“ for scenario values, „Statisticky významný koeficient“ in N06.
+
+### New and changed expected values (reference harness, 2026-11-12)
+
+- U01: leaf thickness 0,292–0,519 mm; histogram with default breaks has two peaks (0,30–0,35 mm: 45 populations; 0,40–0,45 mm: 53).
+- U08: residuals of `mod_puvod` range from −0,090 to +0,108 mm; 112 of 128 (87,5 %) lie within ±0,04 mm; the Q–Q plot departs from the line at both ends (skewness about 0,87).
+- N05: 4/n = 0,031; 11 of 128 populations exceed it (5 `Puvodni`, 6 `Zavleceny`); maximum 0,087 for JA2; leave-one-out temperature slope 0,00119–0,00184 mm/°C.
+- All other expected values are unchanged and were reproduced.
+
+### Timing
+
+The practical lasts 120 minutes. The planned direct-work route of 68 minutes recorded above is superseded. The realistic core route for a beginner group is now about 105–110 minutes: preparation 12–15, U01 10, U02 10, U03 8, U04 8, worked examples 6, U05 13–15, U06 10, U07 8, U08 16–18. This exceeds the 85–95 minute budget of `exercises.md`; Ondřej Mottl accepted the longer route on 2026-11-12. The optional bank (about 40 minutes) is not a completion target. The estimate has not been observed with a beginner group.
+
+### Standing practices (`check_prior_practices.R L07`, 2026-11-12)
+
+| Practice | Disposition |
+|---|---|
+| `plot_distribution_before_summary` | applied: U01 step 4 |
+| `plot_residual_histogram` | applied: U08 step 3 |
+| `plot_residual_qq` | applied: U08 step 3 |
+| `show_groups_in_plot` | false positive: U05 colours and symbols the groups with a legend; the pooled U02 plot deliberately shows the overall question |
+| `check_influential_observations` | applied in optional N05 (4/n line, count, leave-one-out range) |
+| `show_confidence_band` (not triggered) | omitted: the fitted lines in U02 and U05 are drawn with `abline()` without a band, to keep the core route within the accepted time; the band is shown in the skripta and deck |
+
+### Validation
+
+- Parses; UTF-8 without BOM; CRLF; no line above 80 characters except the data URL.
+- The unfilled script sources from a clean session (`Rscript --vanilla`) in a mirrored `L07_praktikum/` folder and creates only the file check, the synthetic `_priklad` objects and the display vectors; without the CSV it stops with the Czech recovery message.
+- An untracked reference harness solved U01–U08 and N05 and reproduced every new and unchanged expected value listed above.
+
+### Open
+
+- Independent re-review with `exercise-reviewer.md` of the revised script.
+- Re-approval by Ondřej Mottl: the 2026-09-23 approval predates the 2026-10-15 layout change and this revision.
