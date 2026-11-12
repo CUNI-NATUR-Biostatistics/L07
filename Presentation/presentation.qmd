@@ -232,7 +232,7 @@ Po absolvování této přednášky budete schopni:
 ### Numerický prediktor
 
 $$
-\text{odezva} = \beta_0 + \beta_1 x + \varepsilon
+\hat{y}_i = \hat{\beta}_0 + \hat{\beta}_1 x_i
 $$
 
 - sklon v biologických jednotkách
@@ -244,7 +244,7 @@ $$
 
 - referenční skupina
 - rozdíl mezi skupinami
-- koeficientový a modelový test
+- test rozdílu a celkový F-test
 :::
 :::
 
@@ -580,7 +580,7 @@ p_residua <-
 #| eval: true
 #| message: false
 #| warning: false
-#| fig-alt: "Graf residuí proti odhadnutým hodnotám: bez vějíře, ale residua leží při nízkých až středních odhadech spíš pod nulou a potom nad ní."
+#| fig-alt: "Graf residuí proti odhadnutým hodnotám: bez oblouku a vějíře, ale residua tvoří oddělené pruhy; ve střední části leží jedna skupina bodů pod nulou a vedle ní jiná nad nulou."
 p_fitted_residua
 ```
 :::
@@ -603,15 +603,15 @@ p_residua
 ::::
 
 ::: {.takeaway-strip .fragment}
-Hledáme náhodný mrak kolem nuly — bez oblouku, vln, vějíře nebo samostatných pásů.
+Hledáme náhodný oblak bodů kolem nuly — bez oblouku, vln, vějíře nebo samostatných pruhů.
 :::
 
 ::: {.fragment}
-Při nízkých až středních odhadech leží residua spíš pod nulou, potom nad ní: [přímka něco nezachytila]{.text-hgl-orange}. Co by to mohlo být?
+Residua tvoří oddělené pruhy: uprostřed leží jedna skupina bodů pod nulou, vedle ní jiná nad nulou. [Přímka něco nezachytila]{.text-hgl-orange}. Co by to mohlo být?
 :::
 
 ::: {.notes}
-Oblouk ani vějíř tu nevidíme, ale residua nejsou úplně náhodná. Otázku nechte otevřenou; odpověď přinese původ populací.
+Oblouk ani vějíř tu nevidíme, ale residua nejsou úplně náhodná: tvoří pruhy. Otázku nechte otevřenou; odpověď přinese původ populací.
 :::
 
 ## Také nejteplejší měsíc souvisí s tloušťkou listu
@@ -932,21 +932,21 @@ $$
 ::: {.panel-data}
 $\hat\beta_0$
 
-intercept modelu
+intercept modelu, řádek `(Intercept)`
 :::
 :::
 ::: {.column width="31%"}
 ::: {.panel-result}
 $\hat\beta_1 x_1$
 
-první příspěvek
+příspěvek průměrné teploty, řádek `teplota_rocni_C`
 :::
 :::
 ::: {.column width="31%"}
 ::: {.panel-result}
 $\hat\beta_2 x_2$
 
-druhý příspěvek
+příspěvek maxima, řádek `teplota_max_C`
 :::
 :::
 :::
@@ -1170,6 +1170,10 @@ p_teploty
 Hledejte body se [skoro stejnou maximální teplotou]{.text-hgl-graphite}, ale [rozdílnou průměrnou teplotou]{.text-hgl-indigo_velvet}.
 :::
 
+::: {.fragment}
+Silně související prediktory jsou **[korelované prediktory]{.text-hgl-orange}**.
+:::
+
 ## Překrývající se informace zvětšuje nejistotu
 
 <br>
@@ -1291,13 +1295,13 @@ Ilustrace vytvořená pomocí AI.
 :::
 :::
 ::: {.column width="49%"}
-[Jednoprediktorová otázka]{.text-hgl-indigo_velvet}
+[Celková otázka]{.text-hgl-indigo_velvet}
 
 Jaký je celkový vztah k průměrné teplotě?
 
 <br>
 
-[Podmíněná otázka]{.text-hgl-orange}
+**[Podmíněná otázka]{.text-hgl-orange}**
 
 Jaký je vztah k průměrné teplotě při stejné maximální teplotě?
 :::
@@ -1526,7 +1530,7 @@ p_skupiny_model
 ```
 
 ::: {.takeaway-strip}
-Stejný sklon pro obě skupiny je [znak aditivního modelu]{.text-hgl-indigo_velvet}.
+Stejný sklon pro obě skupiny je znak **[aditivního modelu]{.text-hgl-indigo_velvet}**: příspěvky prediktorů se jen sčítají.
 :::
 
 ## Jak čteme společný sklon a posun skupiny?
@@ -1559,6 +1563,253 @@ Doplňte:
 
 ::: {.notes}
 Po 45 sekundách požádejte dvě dvojice o přesnou větu včetně jednotek.
+:::
+
+## Sedí model s teplotou a původem k datům?
+
+```{r}
+#| label: pripravit-diagnostiku-puvod
+#| include: false
+data_diagnostika_puvod <-
+  tibble::tibble(
+    puvod = data_kridlatka$puvod,
+    odhad = fitted(object = mod_puvod),
+    residuum = residuals(object = mod_puvod)
+  )
+
+p_diag_fitted_puvod <-
+  ggplot2::ggplot(
+    data = data_diagnostika_puvod,
+    mapping = ggplot2::aes(
+      x = odhad,
+      y = residuum,
+      color = puvod
+    )
+  ) +
+  ggplot2::geom_hline(
+    yintercept = 0,
+    color = biostat_cols[["graphite"]],
+    linetype = "dashed"
+  ) +
+  ggplot2::geom_point(
+    alpha = 0.8,
+    size = 2.6
+  ) +
+  ggplot2::scale_color_manual(
+    values = vec_cols_origin,
+    name = NULL
+  ) +
+  ggplot2::scale_x_continuous(
+    n.breaks = 3,
+    expand = ggplot2::expansion(mult = 0.12)
+  ) +
+  ggplot2::labs(
+    x = "Odhadnutá tloušťka (mm)",
+    y = "Residuum (mm)"
+  ) +
+  theme_l07
+
+p_diag_hist_puvod <-
+  ggplot2::ggplot(
+    data = data_diagnostika_puvod,
+    mapping = ggplot2::aes(x = residuum)
+  ) +
+  ggplot2::geom_histogram(
+    bins = 12,
+    color = biostat_cols[["white"]],
+    fill = biostat_cols[["grey_olive"]]
+  ) +
+  ggplot2::labs(
+    x = "Residuum (mm)",
+    y = "Počet populací"
+  ) +
+  theme_l07
+
+p_diag_qq_puvod <-
+  ggplot2::ggplot(
+    data = data_diagnostika_puvod,
+    mapping = ggplot2::aes(sample = residuum)
+  ) +
+  ggplot2::stat_qq_line(
+    color = biostat_cols[["graphite"]],
+    linewidth = 1
+  ) +
+  ggplot2::stat_qq(
+    color = biostat_cols[["grey_olive"]],
+    alpha = 0.8,
+    size = 2.4
+  ) +
+  ggplot2::labs(
+    x = "Teoretické kvantily",
+    y = "Residuum (mm)"
+  ) +
+  theme_l07
+```
+
+:::: {.columns}
+
+::: {.column width="33%"}
+```{r}
+#| label: zobrazit-diagnostiku-fitted-puvod
+#| echo: false
+#| fig-width: 5.4
+#| fig-height: 5
+#| fig-alt: "Residua modelu s původem proti odhadnutým hodnotám, obarvená podle původu: dva shluky, v obou body kolem přerušované nuly bez oblouku a vějíře."
+p_diag_fitted_puvod
+```
+:::
+
+::: {.column width="33%"}
+```{r}
+#| label: zobrazit-diagnostiku-histogram-puvod
+#| echo: false
+#| fig-width: 5.4
+#| fig-height: 5
+#| fig-alt: "Histogram residuí modelu s původem: jeden vrchol blízko nuly a na obou stranách několik vzdálených hodnot."
+p_diag_hist_puvod
+```
+:::
+
+::: {.column width="33%"}
+```{r}
+#| label: zobrazit-diagnostiku-qq-puvod
+#| echo: false
+#| fig-width: 5.4
+#| fig-height: 5
+#| fig-alt: "Q–Q graf residuí modelu s původem: uprostřed body leží na přímce, na obou koncích se od ní vzdalují."
+p_diag_qq_puvod
+```
+:::
+
+::::
+
+::: {.panel-question}
+[Zkuste si]{.panel-title}
+
+Pruhy z grafu residuí jednoduchého modelu zmizely. Co ale ukazují oba konce Q–Q grafu?
+:::
+
+::: {.takeaway-strip .fragment}
+Bez oblouku a vějíře, ale [těžší chvosty]{.text-hgl-orange}: intervaly a p-hodnoty berme jako přibližné.
+:::
+
+::: {.notes}
+Stejná trojice grafů jako v předchozích lekcích. Barvy původu v levém panelu ukazují, že dva shluky odhadnutých hodnot jsou dvě skupiny, ne problém modelu. Na koncích Q–Q grafu leží několik populací s většími residui, než by čekalo normální rozdělení; chvosty rozdělení jsou jeho okrajové části. Odhady koeficientů tím nejsou chybné. Na dalším snímku se podíváme, zda na těchto populacích stojí výsledek.
+:::
+
+## Nestojí výsledek na několika populacích?
+
+```{r}
+#| label: pripravit-cookovu-vzdalenost-puvod
+#| include: false
+vec_cook_puvod <- cooks.distance(model = mod_puvod)
+hranice_cook_puvod <- 4 / nrow(x = data_kridlatka)
+pocet_nad_hranici_puvod <- sum(vec_cook_puvod > hranice_cook_puvod)
+
+# Refit the model once without each population and keep the temperature slope
+#   and whether its 95% interval includes zero.
+data_bez_jedne_populace <-
+  purrr::map(
+    .x = seq_len(nrow(x = data_kridlatka)),
+    .f = function(i) {
+      mod_bez <-
+        lm(
+          formula = tloustka_listu_mm ~ puvod + teplota_rocni_C,
+          data = data_kridlatka[-i, ]
+        )
+      vec_interval <- confint(object = mod_bez)["teplota_rocni_C", ]
+      tibble::tibble(
+        sklon = coef(object = mod_bez)[["teplota_rocni_C"]],
+        obsahuje_nulu = vec_interval[[1]] <= 0 && vec_interval[[2]] >= 0
+      )
+    }
+  ) |>
+  purrr::list_rbind()
+
+p_cook_puvod <-
+  tibble::tibble(
+    poradi = seq_len(nrow(x = data_kridlatka)),
+    cook = vec_cook_puvod,
+    puvod = data_kridlatka$puvod
+  ) |>
+  ggplot2::ggplot(
+    mapping = ggplot2::aes(
+      x = poradi,
+      y = cook,
+      color = puvod
+    )
+  ) +
+  ggplot2::geom_segment(
+    mapping = ggplot2::aes(
+      xend = poradi,
+      yend = 0
+    ),
+    linewidth = 0.9
+  ) +
+  ggplot2::geom_hline(
+    yintercept = hranice_cook_puvod,
+    color = biostat_cols[["graphite"]],
+    linetype = "dashed"
+  ) +
+  ggplot2::annotate(
+    geom = "text",
+    x = 1,
+    y = hranice_cook_puvod,
+    label = "4/n",
+    vjust = -0.5,
+    hjust = 0,
+    color = biostat_cols[["graphite"]],
+    size = 6
+  ) +
+  ggplot2::scale_color_manual(
+    values = vec_cols_origin,
+    name = NULL
+  ) +
+  ggplot2::labs(
+    x = "Pořadí populace v tabulce",
+    y = "Cookova vzdálenost"
+  ) +
+  theme_l07
+```
+
+:::: {.columns}
+
+::: {.column width="60%"}
+```{r}
+#| label: zobrazit-cookovu-vzdalenost-puvod
+#| echo: false
+#| fig-width: 8
+#| fig-height: 5.6
+#| fig-alt: !expr paste0("Cookova vzdálenost všech populací jako svislé čárky v barvách původu s čárkovanou čarou ve výšce 4/n; čáru přesahuje ", pocet_nad_hranici_puvod, " populací, žádná výrazně nevybočuje.")
+p_cook_puvod
+```
+:::
+
+::: {.column width="38%"}
+
+<br>
+
+::: {.panel-question}
+[Zkuste si]{.panel-title}
+
+Čáru 4/n přesahuje `r pocet_nad_hranici_puvod` z `r nrow(x = data_kridlatka)` populací. Smažeme je?
+:::
+
+::: {.panel-result .fragment}
+[Kontrola]{.panel-title}
+
+Bez kterékoli jedné populace je sklon teploty `r format_value_cz(min(data_bez_jedne_populace$sklon), digits = 4)` až `r format_value_cz(max(data_bez_jedne_populace$sklon), digits = 4)` mm / °C a jeho interval `r if (all(data_bez_jedne_populace$obsahuje_nulu)) "vždy zahrnuje nulu" else "ne vždy zahrnuje nulu"`.
+:::
+:::
+
+::::
+
+::: {.takeaway-strip .text-center .fragment}
+Vlivné populace si prohlédneme, ale nemažeme je jen proto, že překročily hranici.
+:::
+
+::: {.notes}
+Cookovu vzdálenost a hranici 4/n známe z předchozích lekcí. Hodnota 4/n s rostoucím n klesá, takže ji ve velkém výběru několik pozorování překročí běžně; není to pravidlo pro mazání dat. Model jsme odhadli znovu bez každé jednotlivé populace; závěr o sklonu teploty na žádné z nich nestojí.
 :::
 
 ## Při zohlednění původu sklon téměř mizí
@@ -1678,7 +1929,7 @@ p_sklony
 :::
 
 ::: {.takeaway-strip .fragment}
-Původ souvisí s [teplotou]{.text-hgl-graphite} i s [tloušťkou listu]{.text-hgl-graphite}. Celkový sklon proto mísí rozdíl mezi areály s případným vztahem k teplotě: [konfundování]{.text-hgl-orange}.
+Původ souvisí s [teplotou]{.text-hgl-graphite} i s [tloušťkou listu]{.text-hgl-graphite}. Celkový sklon proto mísí rozdíl mezi areály s případným vztahem k teplotě: **[konfundování]{.text-hgl-orange}**.
 :::
 
 ::: {.notes}
@@ -1786,6 +2037,17 @@ p_rozsahy
 #| include: false
 # Teaching input: comparison temperature inside the overlap of both origins.
 teplota_srovnani_C <- 14
+
+# Teaching inputs: MCQ distractors outside the observed temperatures.
+teplota_nad_rozsahem_C <- 21
+teplota_pod_rozsahem_C <- 1
+
+vec_rozsah_vsech_C <- range(data_kridlatka$teplota_rocni_C)
+stopifnot(
+  "Distractor temperatures must lie outside the observed range" =
+    teplota_nad_rozsahem_C > vec_rozsah_vsech_C[[2]] &&
+      teplota_pod_rozsahem_C < vec_rozsah_vsech_C[[1]]
+)
 ```
 
 <br>
@@ -1808,11 +2070,11 @@ p_rozsahy
 [Vyberte podložené srovnání:]{.text-size-heading .text-bold .text-color-indigo_velvet}
 
 ::: {.panel-question}
-**A)** 21 °C
+**A)** `r format_value_cz(teplota_nad_rozsahem_C, digits = 0)` °C
 :::
 
 ::: {.panel-question}
-**B)** 1 °C
+**B)** `r format_value_cz(teplota_pod_rozsahem_C, digits = 0)` °C
 :::
 
 ::: {.panel-question}
@@ -2145,7 +2407,7 @@ Tichý zápis, potom porovnání ve dvojici. Nechte jednu větu přečíst nahla
 
 
 
-## Model spočítá i kombinaci mimo pozorovaný mrak
+## Model spočítá i kombinaci mimo pozorovaný oblak bodů
 
 ::: columns
 ::: {.column width="46%"}
@@ -2196,6 +2458,9 @@ Pasová kontrola: model vydá číslo pro jakoukoli dvojici teplot, ale ne každ
 #| eval: true
 #| message: false
 #| warning: false
+# Teaching inputs: one supported and one unsupported climate combination.
+#   Each value lies inside its own observed range; the second pair does not
+#   occur together in the data.
 data_scenare_klima <-
   tibble::tibble(
     teplota_rocni_C = c(teplota_srovnani_C, 7),
@@ -2230,7 +2495,7 @@ data_scenare_klima <-
 :::
 :::
 
-## Jedna kombinace leží v mraku, druhá mimo něj
+## Jedna kombinace leží v oblaku bodů, druhá mimo něj
 
 ```{r}
 #| label: vykreslit-scenare-klima
@@ -2273,7 +2538,7 @@ p_podpora <-
 #| eval: true
 #| message: false
 #| warning: false
-#| fig-alt: "Bodový graf zvýrazňuje jednu kombinaci teplot uvnitř pozorovaného mraku a druhou kombinaci mimo něj."
+#| fig-alt: "Bodový graf zvýrazňuje jednu kombinaci teplot uvnitř pozorovaného oblaku bodů a druhou kombinaci mimo něj."
 p_podpora
 ```
 
@@ -2390,7 +2655,7 @@ Ilustrace vytvořená pomocí AI.
 ::: {.column width="43%"}
 
 ::: {.fragment}
-[Sekvenční test]{.text-hgl-orange} se ptá zleva doprava.
+**[Sekvenční test]{.text-hgl-orange}** se ptá zleva doprava.
 
 <br>
 
@@ -2433,9 +2698,9 @@ data_anova_poradi <-
   ) |>
   dplyr::mutate(
     text_p = dplyr::if_else(
-      condition = p.value < .Machine$double.eps,
-      true = "< 2×10⁻¹⁶",
-      false = format_value_cz(p.value, digits = 6)
+      condition = p.value < 0.001,
+      true = "< 0,001",
+      false = format_value_cz(p.value, digits = 3)
     )
   )
 ```
@@ -2458,6 +2723,12 @@ data_anova_poradi <-
 ## Pořadí mění sekvenční test, nikoli fit modelu
 
 ::: {.layout-stack .layout-center-y}
+::: {.panel-question}
+[Ve dvojici]{.panel-title}
+
+Co se ve výstupu po prohození pořadí prediktorů změní a co zůstane stejné?
+:::
+
 ::: columns
 ::: {.column width="48%" .fragment}
 ::: {.card-result}

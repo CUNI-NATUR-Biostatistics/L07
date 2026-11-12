@@ -71,7 +71,7 @@
       "options": [
         {
           "id": "vsechny-se-lisi",
-          "label": "Všechny tři druhy se liší, protože celkový F-test je významný."
+          "label": "Všechny tři druhy se liší, protože celkový F-test je statisticky významný."
         },
         {
           "id": "stejna-hmotnost",
