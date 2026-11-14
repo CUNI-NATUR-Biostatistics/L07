@@ -2919,7 +2919,7 @@ border-color: #FFFFFF transparent transparent transparent;
 <li>vysvětlit, proč se <a class="glossary" href>odhad<span class="def">Číslo vypočtené z pozorovaných dat jako přiblížení neznámé vlastnosti nebo parametru; jiný srovnatelný výběr může dát jiný odhad.</span></a> <a class="glossary" href>efektu<span class="def">Kvantitativní popis toho, jak se podle modelu mění odezva s prediktorem; zahrnuje směr, velikost a nejistotu odhadu, ale sám o sobě nedokládá příčinu.</span></a> po přidání prediktoru může změnit, a odlišit celkový a podmíněný vztah;</li>
 <li>rozpoznat silně <a class="glossary" href>korelované prediktory<span class="def">Situace, kdy dva nebo více prediktorů v modelu navzájem korelují; silná korelace způsobuje nestabilitu odhadů.</span></a> a popsat, jak zvyšují <a class="glossary" href>nejistotu<span class="def">Rozsah, v němž nevíme přesnou hodnotu parametru kvůli omezenému výběru a výběrové variabilitě; kvantifikuje se pomocí standardních chyb a intervalů spolehlivosti.</span></a> a komplikují výklad;</li>
 <li>porovnat skupiny a vytvářet <a class="glossary" href>predikce<span class="def">Hodnota odezvy, kterou model odhaduje pro nové pozorování nebo pro zvolenou kombinaci prediktorů, která nebyla mezi daty použitými k odhadu modelu.</span></a> jen pro kombinace hodnot podložené daty;</li>
-<li>odlišit test koeficientu v <code>summary()</code> od sekvenčního testu v <code>anova()</code>.</li>
+<li>odlišit test koeficientu v <code>summary()</code> od <a class="glossary" href>sekvenčního testu<span class="def">Test prediktoru v pořadí, v jakém je zapsán ve formuli: ptá se, zda prediktor přidá informaci k prediktorům zapsaným před ním. Výsledek závisí na pořadí.</span></a> v <code>anova()</code>.</li>
 </ul>
 </section>
 <section id="každý-řádek-je-jedna-zdrojová-populace" class="level2" data-number="3">
@@ -4218,7 +4218,7 @@ teplota_rocni_C -0.0009100173 0.003891958</code></pre>
 </div>
 <div id="callout-27" class="callout-27-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>Celkový vztah a vztah uvnitř skupin se mohou lišit nejen velikostí, ale i směrem. Takové situaci se říká <strong>Simpsonův paradox</strong>. <!-- TODO: add slug simpsonuv-paradox to pojmy.yaml --> U křídlatky se celkový záporný sklon při stejném původu téměř vytratil; jeho odhad je dokonce mírně kladný, ale interval spolehlivosti zahrnuje nulu, takže směr neznáme. Zřetelný obrat směru ukazují tučňáci z minulé lekce:</p>
+<p>Celkový vztah a vztah uvnitř skupin se mohou lišit nejen velikostí, ale i směrem. Takové situaci se říká <strong><a class="glossary" href>Simpsonův paradox<span class="def">Situace, kdy má celkový vztah dvou proměnných opačný směr než vztah uvnitř skupin.</span></a></strong>. U křídlatky se celkový záporný sklon při stejném původu téměř vytratil; jeho odhad je dokonce mírně kladný, ale interval spolehlivosti zahrnuje nulu, takže směr neznáme. Zřetelný obrat směru ukazují tučňáci z minulé lekce:</p>
 <div class="cell" data-desetinna_carka="true">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -4529,7 +4529,7 @@ Confidence level used: 0.95 </code></pre>
 </section>
 <section id="záleží-u-testu-na-pořadí-prediktorů" class="level2" data-number="14">
 <h2 data-number="14" class="anchored" data-anchor-id="záleží-u-testu-na-pořadí-prediktorů"><span class="header-section-number">14</span> Záleží u testu na pořadí prediktorů?</h2>
-<p>V předchozích lekcích jsme testovali, zda je koeficient slučitelný s nulou, a funkcí <code>anova()</code> jsme pokládali celkovou otázku o rozdílech mezi skupinami. U modelu s několika <a class="glossary" href>prediktory<span class="def">Proměnná, pomocí níž vysvětlujeme variabilitu odezvy; v notaci y ~ x je prediktor x.</span></a> musíme rozlišit <strong>test koeficientu</strong> a <strong>sekvenční test prediktoru</strong>. Oba uvádějí <a class="glossary" href>p-hodnotu<span class="def">Pravděpodobnost, že bychom při platnosti nulové hypotézy pozorovali data alespoň tak extrémní jako naše skutečná data.</span></a>, ale odpovídají na jinak formulované otázky.</p>
+<p>V předchozích lekcích jsme testovali, zda je koeficient slučitelný s nulou, a funkcí <code>anova()</code> jsme pokládali celkovou otázku o rozdílech mezi skupinami. U modelu s několika <a class="glossary" href>prediktory<span class="def">Proměnná, pomocí níž vysvětlujeme variabilitu odezvy; v notaci y ~ x je prediktor x.</span></a> musíme rozlišit <strong>test koeficientu</strong> a <strong><a class="glossary" href>sekvenční test<span class="def">Test prediktoru v pořadí, v jakém je zapsán ve formuli: ptá se, zda prediktor přidá informaci k prediktorům zapsaným před ním. Výsledek závisí na pořadí.</span></a> prediktoru</strong>. Oba uvádějí <a class="glossary" href>p-hodnotu<span class="def">Pravděpodobnost, že bychom při platnosti nulové hypotézy pozorovali data alespoň tak extrémní jako naše skutečná data.</span></a>, ale odpovídají na jinak formulované otázky.</p>
 <p>Vytvoříme druhý zápis stejného modelu. Obsahuje stejné dva prediktory a liší se pouze jejich pořadím ve formuli:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stejné prediktory zapíšeme v opačném pořadí</span></span>
@@ -4700,7 +4700,7 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 </div>
 <div id="callout-36" class="callout-36-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>Tabulka z <code>anova()</code> používá sekvenční testy (v literatuře také testy typu I): každý člen testuje po členech, které stojí ve formuli před ním. Funkce <code>car::Anova()</code> z balíčku <code>car</code> (pokud jej nemáte, nainstalujte jej jednou příkazem <code>install.packages(&quot;car&quot;)</code> v Console) počítá <strong>testy typu II</strong> (ve výstupu <em>Type II tests</em>): každý prediktor testuje po zohlednění všech ostatních prediktorů. Testy typu II proto na rozdíl od sekvenčních testů nepřidělují sdílenou informaci podle pořadí členů ve formuli. V <a class="glossary" href>aditivním modelu<span class="def">Model s více prediktory bez interakce: příspěvky prediktorů se sčítají, takže vztah odezvy k jednomu prediktoru je stejný při všech hodnotách ostatních.</span></a> je test typu II stejný, jako kdyby byl daný prediktor ve formuli poslední, a u numerického prediktoru odpovídá <a class="glossary" href>t-testu<span class="def">Test založený na t-statistice (odhad dělený standardní chybou); nejčastěji porovnává průměry dvou skupin nebo testuje, zda je koeficient modelu nulový.</span></a> jeho koeficientu ze <code>summary()</code> (<span class="math inline">\(F = t^2\)</span>).</p>
+<p>Tabulka z <code>anova()</code> používá sekvenční testy (v literatuře také testy typu I): každý člen testuje po členech, které stojí ve formuli před ním. Funkce <code>car::Anova()</code> z balíčku <code>car</code> (pokud jej nemáte, nainstalujte jej jednou příkazem <code>install.packages(&quot;car&quot;)</code> v Console) počítá <strong><a class="glossary" href>testy typu II<span class="def">Test prediktoru, který se ptá, zda prediktor přidá informaci, když jsou v modelu ostatní prediktory; na pořadí ve formuli nezávisí.</span></a></strong> (ve výstupu <em>Type II tests</em>): každý prediktor testuje po zohlednění všech ostatních prediktorů. Testy typu II proto na rozdíl od sekvenčních testů nepřidělují sdílenou informaci podle pořadí členů ve formuli. V <a class="glossary" href>aditivním modelu<span class="def">Model s více prediktory bez interakce: příspěvky prediktorů se sčítají, takže vztah odezvy k jednomu prediktoru je stejný při všech hodnotách ostatních.</span></a> je test typu II stejný, jako kdyby byl daný prediktor ve formuli poslední, a u numerického prediktoru odpovídá <a class="glossary" href>t-testu<span class="def">Test založený na t-statistice (odhad dělený standardní chybou); nejčastěji porovnává průměry dvou skupin nebo testuje, zda je koeficient modelu nulový.</span></a> jeho koeficientu ze <code>summary()</code> (<span class="math inline">\(F = t^2\)</span>).</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Každý prediktor testujeme po zohlednění druhého prediktoru</span></span>
 <span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>car<span class="sc">::</span><span class="fu">Anova</span>(</span>
@@ -4785,7 +4785,7 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 <li>Porovnávané modely fitujte na stejných řádcích.</li>
 <li>Přeložte každý koeficient do věty „při stejných hodnotách ostatních prediktorů“.</li>
 <li>Porovnejte <a class="glossary" href>odhady<span class="def">Číslo vypočtené z pozorovaných dat jako přiblížení neznámé vlastnosti nebo parametru; jiný srovnatelný výběr může dát jiný odhad.</span></a> i jejich <a class="glossary" href>nejistotu<span class="def">Rozsah, v němž nevíme přesnou hodnotu parametru kvůli omezenému výběru a výběrové variabilitě; kvantifikuje se pomocí standardních chyb a intervalů spolehlivosti.</span></a>, nejen <a class="glossary" href>p-hodnoty<span class="def">Pravděpodobnost, že bychom při platnosti nulové hypotézy pozorovali data alespoň tak extrémní jako naše skutečná data.</span></a>.</li>
-<li>Rozlište test koeficientu od sekvenčního testu a u sekvenčního testu zdůvodněte pořadí prediktorů.</li>
+<li>Rozlište test koeficientu od <a class="glossary" href>sekvenčního testu<span class="def">Test prediktoru v pořadí, v jakém je zapsán ve formuli: ptá se, zda prediktor přidá informaci k prediktorům zapsaným před ním. Výsledek závisí na pořadí.</span></a> a u sekvenčního testu zdůvodněte pořadí prediktorů.</li>
 <li>Predikujte pouze pro podporované kombinace hodnot.</li>
 <li>Zkontrolujte <a class="glossary" href>residua<span class="def">Rozdíl mezi pozorovanou hodnotou odezvy a hodnotou odhadnutou modelem: eᵢ = yᵢ − ŷᵢ.</span></a> a <a class="glossary" href>vlivná pozorování<span class="def">Pozorování, jehož vynechání by výrazně změnilo odhadnutý model; vlivná bývají hlavně pozorování s velkým pákovým efektem i velkým residuem.</span></a>; nemažte je automaticky.</li>
 </ol>
@@ -4821,7 +4821,7 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 <li>Přidání prediktoru může výrazně změnit velikost i směr <a class="glossary" href>odhadu<span class="def">Číslo vypočtené z pozorovaných dat jako přiblížení neznámé vlastnosti nebo parametru; jiný srovnatelný výběr může dát jiný odhad.</span></a>, protože model odpovídá na jinou otázku. Když třetí proměnná souvisí s prediktorem i s odezvou, celkový vztah mísí více cest (<a class="glossary" href>konfundování<span class="def">Jev, kdy zdánlivý efekt jednoho prediktoru je (zcela nebo zčásti) způsoben třetí proměnnou korelující s oběma.</span></a>).</li>
 <li><a class="glossary" href>Korelované prediktory<span class="def">Situace, kdy dva nebo více prediktorů v modelu navzájem korelují; silná korelace způsobuje nestabilitu odhadů.</span></a> nesou překrývající se informaci; jejich samostatné příspěvky odhadujeme s větší <a class="glossary" href>nejistotou<span class="def">Rozsah, v němž nevíme přesnou hodnotu parametru kvůli omezenému výběru a výběrové variabilitě; kvantifikuje se pomocí standardních chyb a intervalů spolehlivosti.</span></a>.</li>
 <li>Skupiny porovnáváme a <a class="glossary" href>predikce<span class="def">Hodnota odezvy, kterou model odhaduje pro nové pozorování nebo pro zvolenou kombinaci prediktorů, která nebyla mezi daty použitými k odhadu modelu.</span></a> vytváříme jen pro kombinace hodnot, které mají v datech oporu.</li>
-<li>Pořadí prediktorů mění <a class="glossary" href>p-hodnoty<span class="def">Pravděpodobnost, že bychom při platnosti nulové hypotézy pozorovali data alespoň tak extrémní jako naše skutečná data.</span></a> sekvenčních testů z <code>anova()</code>, nikoli koeficienty a jejich testy v <code>summary()</code>.</li>
+<li>Pořadí prediktorů mění <a class="glossary" href>p-hodnoty<span class="def">Pravděpodobnost, že bychom při platnosti nulové hypotézy pozorovali data alespoň tak extrémní jako naše skutečná data.</span></a> <a class="glossary" href>sekvenčních testů<span class="def">Test prediktoru v pořadí, v jakém je zapsán ve formuli: ptá se, zda prediktor přidá informaci k prediktorům zapsaným před ním. Výsledek závisí na pořadí.</span></a> z <code>anova()</code>, nikoli koeficienty a jejich testy v <code>summary()</code>.</li>
 </ul>
 <div style="page-break-after: always;"></div>
 <section id="závěrečná-otázka" class="level3" data-number="18.1">
@@ -5030,6 +5030,14 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 <td style="text-align: left;">Popis toho, jaké hodnoty proměnná nabývá a jak často se vyskytují; může jít o pozorované rozdělení dat nebo o teoretické pravděpodobnostní rozdělení.</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">sekvencni-test</td>
+<td style="text-align: left;">Test prediktoru v pořadí, v jakém je zapsán ve formuli: ptá se, zda prediktor přidá informaci k prediktorům zapsaným před ním. Výsledek závisí na pořadí.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">simpsonuv-paradox</td>
+<td style="text-align: left;">Situace, kdy má celkový vztah dvou proměnných opačný směr než vztah uvnitř skupin.</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">sklon</td>
 <td style="text-align: left;">Parametr lineárního modelu udávající, o kolik se v průměru liší odezva dvou pozorování, jejichž prediktor se liší o jednu jednotku (při stejných hodnotách ostatních prediktorů).</td>
 </tr>
@@ -5050,18 +5058,22 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 <td style="text-align: left;">Test založený na t-statistice (odhad dělený standardní chybou); nejčastěji porovnává průměry dvou skupin nebo testuje, zda je koeficient modelu nulový.</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">test-typu-ii</td>
+<td style="text-align: left;">Test prediktoru, který se ptá, zda prediktor přidá informaci, když jsou v modelu ostatní prediktory; na pořadí ve formuli nezávisí.</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">uroven-faktoru</td>
 <td style="text-align: left;">Jedna z kategorií kategoriální proměnné uložené v R jako faktor, například jeden druh z proměnné druh.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">variabilita</td>
 <td style="text-align: left;">Obecný termín pro rozsah, v němž se hodnoty proměnné liší od sebe navzájem; kvantifikuje se pomocí rozptylu, SD, IQR nebo rozsahu.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">vif</td>
 <td style="text-align: left;">Ukazatel, nakolik je rozptyl (nejistota) odhadu koeficientu zvětšen tím, že prediktor koreluje s ostatními prediktory v modelu.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">vlivne-pozorovani</td>
 <td style="text-align: left;">Pozorování, jehož vynechání by výrazně změnilo odhadnutý model; vlivná bývají hlavně pozorování s velkým pákovým efektem i velkým residuem.</td>
 </tr>
