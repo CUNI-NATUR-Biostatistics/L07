@@ -913,16 +913,6 @@ coef(object = summary(object = mod_dve_teploty))
 #| include: false
 tab_rocni <- coef(object = summary(object = mod_rocni_teplota))
 tab_dve <- coef(object = summary(object = mod_dve_teploty))
-
-# Share of the variability of annual temperature captured by the maximum;
-#   only the remainder carries the conditional annual-temperature effect.
-podil_rocni_z_maxima <-
-  summary(
-    object = lm(
-      formula = teplota_rocni_C ~ teplota_max_C,
-      data = data_kridlatka
-    )
-  )$r.squared
 ```
 
 V každé tabulce najdeme řádek `teplota_rocni_C`. Sloupec `Estimate` obsahuje `r render_glossary_term("odhad", display = "odhad")` koeficientu a sloupec `Std. Error` jeho `r render_glossary_term("standardni-chyba", display = "standardní chybu")`.
@@ -1016,7 +1006,7 @@ ggplot2::ggplot(
 V pruhu mezi `r vec_pruh_maxima_C[[1]]` a `r vec_pruh_maxima_C[[2]]` °C leží `r sum(vec_v_pruhu)` z `r nrow(x = data_kridlatka)` populací a jejich roční teploty sahají od `r format_value_cz(vec_rocni_v_pruhu[[1]], digits = 2)` do `r format_value_cz(vec_rocni_v_pruhu[[2]], digits = 2)` °C. Model takto porovnává populace v každé výšce maxima zároveň. Pruh je jen ilustrace: model nepoužívá jeden pruh, ale všechny populace. Využije z nich však jen tu část rozdílů v roční teplotě, kterou nelze odhadnout z maxima. Protože body tvoří úzký rostoucí oblak, je tato část malá; velké rozdíly v roční teplotě při stejném maximu mají hlavně populace na okrajích oblaku.
 :::
 
-Maximum nejteplejšího měsíce zachycuje `r round(x = 100 * podil_rocni_z_maxima)` % variability roční teploty. Na podmíněnou otázku proto odpovídá jen zbývajících `r 100 - round(x = 100 * podil_rocni_z_maxima)` % této variability. Model o ní ví méně než o celkovém vztahu, a samostatné příspěvky obou teplot se tak oddělují s větší `r render_glossary_term("nejistota", display = "nejistotou")`, přestože model lze bez problému fitovat.
+Maximum nejteplejšího měsíce nese velkou část informace o roční teplotě. Na podmíněnou otázku proto zbývá jen malá část rozdílů v roční teplotě. Model o ní ví méně než o celkovém vztahu, a samostatné příspěvky obou teplot se tak oddělují s větší `r render_glossary_term("nejistota", display = "nejistotou")`, přestože model lze bez problému fitovat.
 
 ::: {.box-data title="Doplňující: korelované prediktory mohou vytvářet nestabilní koeficienty" collapse="true"}
 
