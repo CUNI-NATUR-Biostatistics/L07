@@ -33,6 +33,9 @@
 # Stáhněte skript:
 # https://cuni-natur-biostatistics.github.io/L07/current/code/cviceni.R
 # Uložte jej do hlavní složky projektu jako cviceni.R.
+# Pokud prohlížeč uloží soubory rovnou do složky Stažené
+# soubory, přesuňte je odtud na uvedená místa. Pokud se soubor
+# v prohlížeči zobrazí jako text, uložte ho klávesami Ctrl + S.
 # V RStudiu zvolte File > Open File a stažený skript otevřete.
 #
 # L07_praktikum/
@@ -47,16 +50,16 @@
 # Výsledky se ukážou v Console, grafy v Plots. Řádky začínající
 # znakem # jsou komentáře a R je nespouští.
 # Pod „Vaše řešení“ pište příkazy bez #; slovní odpovědi pište
-# na komentářové řádky začínající #. Kopii průběžně ukládejte
+# na komentářové řádky začínající #. Skript průběžně ukládejte
 # pomocí Ctrl + S. Nápovědy čtěte postupně.
 #
 # Hlavní úlohy L07-U01 až L07-U08 řešte v uvedeném pořadí.
 # Pozdější úlohy používají data_kridlatka z U01 a modely
 # vytvořené v U02, U03 a U05. Úlohy navíc jsou dobrovolné.
 # Projekt znovu otevřete dvojklikem na soubor .Rproj.
-# Restart R smaže objekty z aktuální relace, ale uložený
-# skript a CSV zůstanou na disku. Po restartu spusťte svůj
-# uložený skript znovu shora dolů.
+# Restart R (Session > Restart R) smaže objekty z aktuální
+# relace, ale uložený skript a CSV zůstanou na disku. Po
+# restartu spusťte svůj uložený skript znovu shora dolů.
 
 
 #--------------------------------------------------#
@@ -66,8 +69,9 @@
 # Po praktiku dokážete fitovat aditivní lineární model
 # s více prediktory, vykládat jeho koeficienty při stejných
 # hodnotách ostatních prediktorů, popsat změnu odhadu po
-# přidání prediktoru a rozpoznat problém silně korelovaných
-# prediktorů.
+# přidání prediktoru, rozpoznat problém silně korelovaných
+# prediktorů, porovnat skupiny při společné, daty podložené
+# teplotě a odlišit test koeficientu od sekvenčního testu.
 #
 # V minulé lekci jste pracovali s kategoriálním prediktorem,
 # referenční skupinou, intervalem spolehlivosti a funkcí
@@ -118,9 +122,21 @@ if (
 # Tabulka vychází z experimentu se zdrojovými populacemi
 # křídlatky pěstovanými ve společné zahradě v Šanghaji.
 # Jeden řádek je průměr za jednu zdrojovou populaci, nikoli
-# jedna rostlina. Klimatické proměnné popisují místo původu.
+# jedna rostlina. Klimatické proměnné popisují místo původu
+# (průměr let 1981–2010). Proměnné použité v hlavních úlohách:
+# tloustka_listu_mm ... průměrná tloušťka listu populace v mm;
+# puvod             ... Puvodni (východní Asie) nebo Zavleceny
+#                       (Evropa, Severní Amerika);
+# teplota_rocni_C   ... průměrná roční teplota místa původu v °C;
+# teplota_max_C     ... maximální teplota nejteplejšího měsíce
+#                       v °C.
+# Další klimatické sloupce popisují sezónnost teploty, minimum
+# nejchladnějšího měsíce a srážky.
 # Hodnoty Puvodni a Zavleceny ponecháváme v kódu bez diakritiky,
 # aby odpovídaly hodnotám uloženým v CSV.
+# Zdroj: Cao et al. (2025), Dryad, CC0; klima CHELSA-BIOCLIM 2.1,
+# Brun et al. (2022), CC0. Přípravu tabulky popisují materiály
+# k této lekci.
 
 
 #----------------------------------------#
@@ -203,7 +219,9 @@ if (
 # Očekávaný výsledek:
 # Sklon je přibližně −0,00913 mm/°C a jeho 95% interval je přibližně
 # −0,01081 až −0,00746. Rozdíl 5 °C odpovídá odhadované změně asi −0,0457
-# mm. Graf klesá a residua neukazují výrazný oblouk nebo vějíř.
+# mm. Graf klesá a residua neukazují výrazný oblouk nebo vějíř. Tvoří ale
+# pruhy bodů, nikoli náhodný oblak: přímka něco nezachytila. K tomu se
+# vrátíme v U05.
 #
 # Interpretace:
 # Popisuje sklon příčinný účinek teploty, nebo celkovou asociaci mezi
@@ -253,7 +271,7 @@ coef(object = mod_priklad)
 # 2. Zobrazte summary() a confint().
 # 3. Vyložte oba teplotní koeficienty v mm na 1 °C a vždy přesně uveďte,
 #    kterou druhou teplotu při porovnání držíme stejnou.
-# 4. Vysvětlete, co zde znamená + a proč tento model neobsahuje interakci.
+# 4. Vysvětlete, co zde znamená +.
 
 # Vaše řešení:
 
@@ -263,18 +281,19 @@ coef(object = mod_priklad)
 # zůstává stejný.
 #
 # Nápověda 2:
-# V lm() uveďte oba názvy napravo od ~ oddělené znakem +; hodnoty čtěte v
-# příslušných řádcích summary().
+# Hodnoty čtěte v řádcích teplota_rocni_C a teplota_max_C, ve sloupci
+# Estimate; confint() vrací dolní a horní hranici intervalu. K bodu 4 se
+# vraťte k ukázce se znaménkem + výše.
 #
 # Očekávaný výsledek:
 # Při stejném maximu je koeficient roční teploty asi −0,00528 mm/°C. Při
 # stejné roční teplotě je koeficient maxima asi −0,00475 mm/°C. Znaménko +
-# přidává oba příspěvky do jednoho aditivního modelu; nedovoluje, aby se
-# sklon jednoho prediktoru měnil s druhým prediktorem.
+# sčítá příspěvky v aditivním modelu: odhad = intercept + příspěvek roční
+# teploty + příspěvek maxima.
 #
 # Interpretace:
-# Proč tyto dva koeficienty nejsou sklony dvou původních přímek s jedním
-# prediktorem vložené vedle sebe?
+# Proč tyto dva koeficienty nejsou sklony dvou samostatných přímek
+# s jedním prediktorem vložené vedle sebe?
 
 
 #--------------------------------------------------#
@@ -328,9 +347,10 @@ coef(object = mod_priklad)
 
 # Barvy podle skupiny, abline() a legend() jste už použili
 # v dřívějším praktiku. Krátká ukázka na umělých datech:
-# pojmenovaný vektor barev indexovaný faktorem dá každému bodu
-# barvu jeho skupiny. abline(a = , b = ) nakreslí přímku
-# z interceptu a a sklonu b.
+# pojmenovaný vektor barev vybíraný podle názvů skupin dá
+# každému bodu barvu jeho skupiny. as.character() převede
+# faktor na text s názvy skupin.
+# abline(a = , b = ) nakreslí přímku z interceptu a a sklonu b.
 delka_dne_priklad <-
   factor(
     x = c("kratky", "dlouhy", "kratky", "dlouhy", "kratky", "dlouhy"),
@@ -345,7 +365,7 @@ barvy_priklad <-
 plot(
   x = data_priklad$teplota_C,
   y = data_priklad$rust_cm,
-  col = barvy_priklad[delka_dne_priklad],
+  col = barvy_priklad[as.character(x = delka_dne_priklad)],
   pch = 16,
   xlab = "Teplota (°C)",
   ylab = "Růst (cm)"
@@ -375,8 +395,7 @@ legend(
 # Aditivní model s původem a teplotou odhaduje dvě rovnoběžné
 # přímky: společný sklon a stálý svislý rozdíl skupin.
 # Následující pojmenované vektory dávají skupinám přístupné
-# barvy, odlišné symboly bodů a odlišné typy čar. Barvy jsou
-# stejné jako ve skriptech a v přednášce.
+# barvy, odlišné symboly bodů a odlišné typy čar.
 barvy_puvodu <-
   c(
     Puvodni = "#4E9A8A",
@@ -400,8 +419,9 @@ typy_car_puvodu <-
 
 # Zadání:
 # Pracujte s data_kridlatka a s vektory barvy_puvodu, symboly_puvodu
-# a typy_car_puvodu. Vektory indexujte faktorem data_kridlatka$puvod,
-# stejně jako v ukázce výše.
+# a typy_car_puvodu. Hodnoty z vektorů vybírejte podle názvů skupin,
+# tedy pomocí as.character(x = data_kridlatka$puvod), stejně jako
+# v ukázce výše.
 # 1. Bodovým grafem zobrazte tloušťku proti roční teplotě, osy popište
 #    česky v °C a mm a skupiny rozlište barvou a symbolem.
 # 2. Fitujte mod_puvod s formulí
@@ -421,7 +441,9 @@ typy_car_puvodu <-
 # koeficient porovnává teploty při stejném původu.
 #
 # Nápověda 2:
-# V plot() nastavte col = barvy_puvodu[data_kridlatka$puvod] a stejně pch.
+# V plot() nastavte
+# col = barvy_puvodu[as.character(x = data_kridlatka$puvod)]
+# a stejně pch.
 # Obě abline() mají stejný argument b; pro zavlečené populace přičtěte
 # skupinový koeficient k argumentu a. legend() potřebuje argumenty x,
 # legend, col, pch a lty.
@@ -432,6 +454,8 @@ typy_car_puvodu <-
 # sklon je asi +0,00149 mm/°C a jeho 95% interval přibližně −0,00091 až
 # +0,00389. Graf ukazuje dvě rovnoběžné přímky se stejným sklonem a různou
 # výškou; symboly a typy čar rozlišují skupiny i bez barevného zobrazení.
+# Přímky z abline() pokračují přes celou osu, i tam, kde populace dané
+# skupiny nemáme; proč na tom záleží, ukáže U06.
 #
 # Interpretace:
 # Jak se otázka společného sklonu liší od celkového sklonu napříč oběma
@@ -491,8 +515,11 @@ predict(
 # je nižší z obou horních hranic.
 #
 # Nápověda 2:
-# Vytvořte data.frame() se sloupci puvod a teplota_rocni_C; v predict()
-# nastavte newdata a interval = "confidence".
+# Rozsah jedné skupiny získáte například z
+# range(data_kridlatka$teplota_rocni_C[data_kridlatka$puvod == "Puvodni"]).
+# Vytvořte data.frame() se sloupci puvod a teplota_rocni_C; puvod vytvořte
+# pomocí factor() s argumentem levels = levels(x = data_kridlatka$puvod).
+# V predict() nastavte newdata a interval = "confidence".
 #
 # Očekávaný výsledek:
 # Rozsahy jsou 12,15–19,95 °C pro původní a 5,95–16,35 °C pro zavlečené
@@ -533,21 +560,33 @@ predict(
 
 
 # Nápověda 1:
-# Před porovnáním koeficientů je seřaďte podle jejich názvů; pořadí řádků ve
-# dvou výstupech není stejné.
+# Porovnávejte vždy koeficienty se stejným názvem; pořadí hodnot ve dvou
+# výstupech není stejné. Test koeficientu v summary() se ptá, co prediktor
+# přidá ke všem ostatním; sekvenční test v anova() se ptá, co přidá
+# k prediktorům zapsaným před ním.
 #
 # Nápověda 2:
-# Použijte sort(coef()), fitted(), max(), abs() a dvě samostatná volání
-# anova().
+# Koeficienty druhého modelu seřaďte podle názvů prvního:
+# coef(mod_dve_teploty_opacne)[names(coef(mod_dve_teploty))]. Dále použijte
+# fitted(), max(), abs() a dvě samostatná volání anova(). p-hodnoty najdete
+# ve sloupci Pr(>|t|) výstupu summary() a ve sloupci Pr(>F) výstupu anova().
 #
 # Očekávaný výsledek:
 # Odpovídající koeficienty a odhadnuté hodnoty jsou stejné až na numerické
 # zaokrouhlení. Když je roční teplota první, součty čtverců jsou asi 0,20170
 # a 0,01327; při opačném pořadí asi 0,19679 a 0,01817. Sekvenční F a p se
-# změní, fit modelu ani testy koeficientů ne.
+# změní, odhadnuté hodnoty ani testy koeficientů ne. U teplota_max_C je
+# v summary(mod_dve_teploty) t asi −2,84 a p asi 0,0052; v
+# anova(mod_dve_teploty) je F asi 8,09 a p také asi 0,0052. U
+# teplota_rocni_C je p asi 0,0011 v summary(mod_dve_teploty), ale menší
+# než 0,001 v anova(mod_dve_teploty).
 #
 # Interpretace:
 # Proč přehazování pořadí není způsob, jak hledat příznivější p-hodnotu?
+# Znovu zobrazte summary(mod_dve_teploty) a porovnejte p-hodnoty obou
+# teplot s anova(mod_dve_teploty): proč se u teplota_max_C shodují a u
+# teplota_rocni_C ne?
+# Kdy použijete test koeficientu a kdy sekvenční test?
 
 
 #--------------------------------------------------#
@@ -567,7 +606,7 @@ predict(
 #    popište česky v mm a přidejte vodorovnou čáru v nule.
 # 3. Pro mod_puvod nakreslete histogram residuí s českým popiskem osy x
 #    a Q–Q graf residuí s referenční přímkou.
-# 4. Napište 4–6 vět pro biologa:
+# 4. Napište 5–7 vět pro biologa:
 #    a) položte otázku a určete jednotku analýzy;
 #    b) popište celkový a podmíněný teplotní vztah;
 #    c) vyložte rozdíl původu při stejné teplotě;
@@ -596,8 +635,9 @@ predict(
 # residuí leží mezi −0,04 a +0,04 mm; několik populací má residua až asi
 # −0,09 a +0,11 mm. V Q–Q grafu leží body uprostřed blízko přímky a na obou
 # koncích se od ní odklánějí, výrazněji v horním konci: chvosty
-# rozdělení residuí jsou těžší, než by odpovídalo normálnímu rozdělení. Závěr se týká asociací mezi 128
-# zdrojovými populacemi, nikoli prokázaného účinku klimatu.
+# rozdělení residuí jsou těžší, než by odpovídalo normálnímu rozdělení.
+# Závěr se týká asociací mezi 128 zdrojovými populacemi, nikoli
+# prokázaného účinku klimatu.
 #
 # Interpretace:
 # Který údaj ukazuje, že původ a roční teplota nesou v tomto souboru
@@ -624,7 +664,8 @@ predict(
 #    srazky_sezonnost.
 # 2. Vypočítejte jejich korelační matici a zaokrouhlete ji na dvě desetinná
 #    místa.
-# 3. Najděte jednu silnou kladnou a jednu zápornou dvojici.
+# 3. Najděte jednu silnou kladnou dvojici, jednu zápornou dvojici a jednu
+#    dvojici téměř bez vztahu.
 # 4. Vysvětlete, proč osm názvů neznamená osm nezávislých částí klimatické
 #    informace.
 
@@ -641,9 +682,10 @@ predict(
 #
 # Očekávaný výsledek:
 # Matice je 8 × 8 a je souměrná. Roční a maximální teplota mají korelaci
-# asi +0,85. Sezonnost teploty a minimum nejchladnějšího měsíce mají zápornou
-# korelaci asi −0,64. Více dvojic tedy nese výrazně překrývající se
-# klimatickou informaci.
+# asi +0,85. Sezónnost teploty a minimum nejchladnějšího měsíce mají
+# zápornou korelaci asi −0,64. Sezónnost teploty a roční teplota spolu
+# téměř nesouvisí (asi −0,05). Některé dvojice tedy nesou výrazně
+# překrývající se klimatickou informaci, jiné téměř žádnou.
 #
 # Interpretace:
 # Proč by model se všemi osmi prediktory nebyl automaticky nejlépe
@@ -743,7 +785,7 @@ predict(
 # Očekávaný výsledek:
 # Intercept a zápis skupinového rozdílu se změní; skupinový koeficient bude
 # mít opačné znaménko. Společný sklon a odhadnuté hodnoty zůstanou stejné až na
-# numerické zaokrouhlení. Data ani fit modelu se nezměnily.
+# numerické zaokrouhlení. Data ani odhadnuté hodnoty se nezměnily.
 #
 # Interpretace:
 # Proč znaménko skupinového koeficientu nelze číst bez znalosti referenční
@@ -840,7 +882,8 @@ predict(
 # Přidání prediktoru proto mění otázku, nejen číslo.
 # Korelované prediktory sdílejí informaci a jejich samostatné
 # příspěvky odhadujeme s menší přesností.
-# Pořadí prediktorů mění sekvenční anova(), nikoli fit modelu.
+# Pořadí prediktorů mění sekvenční testy v anova(), nikoli
+# koeficienty ani odhadnuté hodnoty.
 # Interakce prediktorů patří do následující lekce; porovnání
 # modelů pomocí R², adjustovaného R² a AIC patří do pozdější
 # lekce.
@@ -849,6 +892,7 @@ predict(
 # 1. Co znamená „při stejné hodnotě ostatních prediktorů“?
 # 2. Proč se po přidání prediktoru může změnit koeficient?
 # 3. Jak korelace prediktorů ovlivnila standardní chybu?
-# 4. Co se změnilo po přehození pořadí prediktorů v anova()?
+# 4. Co se změnilo po přehození pořadí prediktorů v anova()
+#    a kdy použijete test koeficientu a kdy sekvenční test?
 # 5. Proč samotný výpočet predict() nezaručuje oporu v datech?
 # 6. Které tři grafy residuí jste použili a co každý z nich ukazuje?

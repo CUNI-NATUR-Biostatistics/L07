@@ -111,3 +111,45 @@ The practical lasts 120 minutes. The planned direct-work route of 68 minutes rec
 
 - Independent re-review with `exercise-reviewer.md` of the revised script.
 - Re-approval by Ondřej Mottl: the 2026-09-23 approval predates the 2026-10-15 layout change and this revision.
+
+## Revision 2026-11-14 (alignment with the revised skripta and deck)
+
+Trigger: after the deck rounds of 2026-11-13/14, Ondřej Mottl asked which exercise changes follow from the skripta and deck, and noted that the interaction question in U03 is outside this lesson. He approved changes E1–E7 and, after an independent review, X1–X5 and the low findings except L10 (2026-11-14).
+
+### Changes to `Exercises/cviceni.R`
+
+- E1, U03: no interaction question; the expected result says that + sums the contributions (intercept + contribution of each temperature).
+- E2: „fit modelu“ → „odhadnuté hodnoty“ (U07, N04, closing section).
+- E3 and X5, U07: hints name the two tests; the Interpretace asks why the p-values of `teplota_max_C` in `summary()` and `anova()` agree and those of `teplota_rocni_C` do not, and when to use which test; the expected result gives t ≈ −2,84, F ≈ 8,09 = t², p ≈ 0,0052, and 0,0011 vs < 0,001. A separate Zadání step was tried first and folded into Interpretace to protect the core time.
+- E4, U02: the expected result notes the separate residual bands and points to U05.
+- E5, N01: also a near-zero pair (sezónnost teploty × roční teplota, r ≈ −0,05); „sezónnost“.
+- E6: closing self-check 4 asks when to use which test. E7: U08 comment re-wrapped.
+- X1, U07: comparison of coefficients by name (`coef(mod_dve_teploty_opacne)[names(coef(mod_dve_teploty))]`) instead of `sort(coef())`, which sorts by value.
+- X2: colours and symbols are selected with `as.character()` of the factor in the worked example, U05 Zadání and Nápověda 2, as taught in L02–L05.
+- X3: the data introduction gives a key of the variables used in the core tasks and the source (Cao et al. 2025, Dryad, CC0; CHELSA-BIOCLIM 2.1, Brun et al. 2022, CC0).
+- X4: L06 recovery sentences for files saved to Downloads or shown as text.
+- Low: „Skript průběžně ukládejte“; Session > Restart R; outcomes mention prediction with data support and the two tests; U03 Nápověda 2 points to the summary rows and `confint()`; „dvou samostatných přímek“; the reference to other materials removed; U05 expected result notes that `abline()` lines run beyond each group's data (pointer to U06); U06 Nápověda 2 shows a per-group `range()` and `factor(levels = …)`; U08 „5–7 vět“.
+- Not changed (L10): Czech typography in comments, as required by the project language rules.
+
+### Standing practices
+
+| Practice | Disposition |
+|---|---|
+| residual plots of `mod_dve_teploty` (U03) | omitted for time; the residuals are checked for the single-predictor model in U02 and for the final model `mod_puvod` in U08 |
+
+### Timing
+
+The independent review estimated the core route at about 118–125 minutes with a separate U07 step on the two tests; folding it into Interpretace returns U07 to about 9–10 minutes and the route to about 110–115 minutes, above the 105–110 minutes accepted on 2026-11-12. Not observed with a beginner group.
+
+### Validation
+
+- Parses; UTF-8 without BOM; CRLF; no line above 80 characters except the data URL.
+- The unfilled script sources from a clean session (`Rscript --vanilla`) in a mirrored `L07_praktikum/` folder; without the CSV it stops with the Czech recovery message.
+- Reference harness (untracked, scratchpad): U03 coefficients; U07 p-values, t, F and sequential sums of squares; name-matched coefficient differences (~1e-16); U02 residual bands by origin at fitted 0,37–0,42 (původní all below zero, n = 15; zavlečené 88 % above, n = 34); N01 correlations; U06 hint code (0,3323 and 0,4412 mm); colour indexing (55 teal, 73 terracotta).
+- Independent review: fresh read-only Sonnet subagent with `.ai/agents/exercise-reviewer.md`, whole script; no high findings; the five medium and the low findings are handled as listed above.
+- Independent re-check of the fixes (fresh read-only Sonnet subagent): no high findings. Fixed: the U07 expected result now gives only the numbers (it had answered the Interpretace question) and names `summary(mod_dve_teploty)` and `anova(mod_dve_teploty)`; the Interpretace asks students to show `summary(mod_dve_teploty)` again; „pořadí hodnot“; `as.character()` explained in the colour example; `x =` in inline code; the U02 residual wording softened to „pruhy bodů, nikoli náhodný oblak“. Its U07 estimate is 12–15 minutes and the core route about 100–110 minutes.
+- After these fixes: CRLF, no BOM, only the data URL above 80 characters; the unfilled script sources from a clean session and stops with the Czech message without the CSV.
+
+### Open
+
+- Re-approval by Ondřej Mottl of the revised exercise.
