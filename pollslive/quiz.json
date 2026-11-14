@@ -21,7 +21,7 @@
         },
         {
           "id": "nelze-z-tabulky",
-          "label": "Nelze, tabulka tento rozdíl neobsahuje"
+          "label": "Nelze, z tohoto výstupu ho nezjistíme"
         },
         {
           "id": "asi-1343",
@@ -29,11 +29,11 @@
         }
       ],
       "correctOptionId": "asi-1343",
-      "explanation": "Oba koeficienty jsou rozdíly od Adélií: 1 375 − 32 ≈ 1 343 g. Samotný odhad rozdílu z tabulky spočítáme; pro jeho SE a test bychom potřebovali jinou referenci nebo párové porovnání.",
+      "explanation": "Oba koeficienty jsou rozdíly od Adélií: 1 375 − 32 ≈ 1 343 g. Samotný odhad rozdílu z výstupu spočítáme; pro jeho SE a test bychom potřebovali jinou referenci nebo párové porovnání.",
       "media": {
         "path": "assets/l06-species-coefficients.png",
-        "alt": "Karta koeficientů modelu hmotnosti těla podle druhu s referencí Adélie: odhadnutý průměr Adélií 3 701 g, koeficient Chinstrap plus 32 g a koeficient Gentoo plus 1 375 g.",
-        "provenance": "Deterministically rendered by R/render_pollslive_assets.R from a byte-identical copy of approved L06 data/palmer_penguins.csv (SHA-256 1B70D6EABDCEFE166CC0357734FB7C1B1CC1CB9682C0DD16E97F2693BC849FDF) using lm(hmotnost_tela_g ~ druh) with Adelie as reference; checksum pinned in R/verify_pollslive_assets.R."
+        "alt": "Kód R z minulé lekce: mod_tri <- lm(formula = hmotnost_tela_g ~ druh, data = data_penguins) a coef(object = mod_tri). Výstup: (Intercept) 3700.66225, druhChinstrap 32.42598, druhGentoo 1375.35401; reference je Adélie.",
+        "provenance": "Rendered by R/render_pollslive_assets.R (Consolas font, Windows) from a byte-identical copy of approved L06 data/palmer_penguins.csv (SHA-256 1B70D6EABDCEFE166CC0357734FB7C1B1CC1CB9682C0DD16E97F2693BC849FDF): the L06 code for lm(hmotnost_tela_g ~ druh) with Adelie as reference and the printed coef() output; checksum pinned in R/verify_pollslive_assets.R."
       }
     },
     {
@@ -71,7 +71,7 @@
       "options": [
         {
           "id": "vsechny-se-lisi",
-          "label": "Všechny tři druhy se liší, protože celkový F-test je významný."
+          "label": "Všechny tři druhy se liší, protože celkový F-test je statisticky významný."
         },
         {
           "id": "stejna-hmotnost",
@@ -91,7 +91,7 @@
       "media": {
         "path": "assets/l06-posthoc-species-intervals.png",
         "alt": "Graf tří párových rozdílů hmotnosti s Tukeyho intervaly: Chinstrap − Adélie kolem nuly s intervalem přes nulu, Gentoo − Chinstrap a Gentoo − Adélie kolem 1 350 g daleko od nuly.",
-        "provenance": "Byte-identical copy of approved L06 Presentation/Materials/posthoc_species_intervals.png (emmeans revpairwise contrasts with Tukey adjustment); SHA-256 EFD1659C9C4E29E8B9C45DD9A27326A0451FB3048C0131307913A90A6F2D0896; verified by R/render_pollslive_assets.R and R/verify_pollslive_assets.R."
+        "provenance": "Byte-identical copy of approved L06 Presentation/Materials/posthoc_species_intervals.png (emmeans revpairwise contrasts with Tukey adjustment); SHA-256 B2869410240F7C855A03CC089918D82747004DB3A6FE03460E23EC303214036A; verified by R/render_pollslive_assets.R and R/verify_pollslive_assets.R."
       }
     }
   ]
