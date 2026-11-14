@@ -15,11 +15,11 @@ approved_assets <-
     "l06-three-species-means.png" =
       "0c2cc9c10223440035d6311d54fefda1ab21465f3f04577d2087d9a457a8216a",
     "l06-species-coefficients.png" =
-      "9a1a646b366ab56f60e71914321306b272491bec759e1a3635fe461c3dff2b4c",
+      "21b0a1f5a3d690e32bcdb8ee624f51b784ef5e28edc450f76f34cceb05b1b2e2",
     # Byte-identical copy of L06 Presentation/Materials/
     #   posthoc_species_intervals.png
     "l06-posthoc-species-intervals.png" =
-      "efd1659c9c4e29e8b9c45dd9a27326a0451fb3048c0131307913a90a6f2d0896"
+      "b2869410240f7c855a03cc089918d82747004db3a6fe03460e23ec303214036a"
   )
 
 asset_paths <-

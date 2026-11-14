@@ -12,7 +12,7 @@ expected_hashes <- c(
   "pollslive/assets/l06-three-species-means.png" =
     "0c2cc9c10223440035d6311d54fefda1ab21465f3f04577d2087d9a457a8216a",
   "pollslive/assets/l06-posthoc-species-intervals.png" =
-    "efd1659c9c4e29e8b9c45dd9a27326a0451fb3048c0131307913a90a6f2d0896"
+    "b2869410240f7c855a03cc089918d82747004db3a6fe03460e23ec303214036a"
 )
 
 # The L06 Tukey interval figure is copied byte for byte from the L06
@@ -71,14 +71,27 @@ colours <- c(
   pale = "#E9DFEF"
 )
 
-number_cz <- function(value, digits = 0) {
-  formatC(value, format = "f", digits = digits, decimal.mark = ",", big.mark = " ")
-}
+# Question 1 shows the L06 model code and the coef() output it prints, so that
+#   students see the coefficients as R reports them. Re-rendering can change
+#   the bytes; R/verify_pollslive_assets.R pins the approved image.
+code_lines <-
+  c(
+    "mod_tri <-",
+    "  lm(",
+    "    formula = hmotnost_tela_g ~ druh,",
+    "    data = data_penguins",
+    "  )",
+    "coef(object = mod_tri)"
+  )
+output_lines <-
+  utils::capture.output(
+    print(stats::coef(model_species))
+  )
 
 output_path <- here::here(output_dir, "l06-species-coefficients.png")
 grDevices::png(
   filename = output_path,
-  width = 1600,
+  width = 1300,
   height = 700,
   res = 160,
   type = "cairo",
@@ -87,79 +100,47 @@ grDevices::png(
 grid.newpage()
 
 grid.text(
-  "Co říkají koeficienty o hmotnosti?",
-  x = 0.06, y = 0.91, just = "left",
-  gp = gpar(col = colours[["indigo"]], fontsize = 31, fontface = "bold")
-)
-grid.text(
-  "Model: hmotnost těla podle druhu · reference: Adélie",
-  x = 0.06, y = 0.80, just = "left",
-  gp = gpar(col = colours[["graphite"]], fontsize = 19)
+  "Model z minulé lekce · reference: Adélie",
+  x = 0.05, y = 0.92, just = "left",
+  gp = gpar(col = colours[["indigo"]], fontsize = 26, fontface = "bold")
 )
 
-grid.roundrect(
-  x = 0.19, y = 0.48, width = 0.27, height = 0.49,
-  r = unit(0.025, "npc"),
+line_step <- 0.076
+
+# Code block
+code_top <- 0.82
+code_height <- line_step * length(code_lines) + 0.04
+grid.rect(
+  x = 0.05, y = code_top, width = 0.90, height = code_height,
+  just = c("left", "top"),
   gp = gpar(fill = colours[["white"]], col = colours[["pale"]], lwd = 2)
 )
-grid.text(
-  "Adélie · reference",
-  x = 0.095, y = 0.63, just = "left",
-  gp = gpar(col = colours[["graphite"]], fontsize = 21, fontface = "bold")
+grid.rect(
+  x = 0.05, y = code_top, width = 0.008, height = code_height,
+  just = c("left", "top"),
+  gp = gpar(fill = colours[["indigo"]], col = NA)
 )
-grid.text(
-  paste0(number_cz(estimates[["(Intercept)"]]), " g"),
-  x = 0.095, y = 0.49, just = "left",
-  gp = gpar(col = colours[["indigo"]], fontsize = 34, fontface = "bold")
-)
-grid.text(
-  "odhadnutý průměr",
-  x = 0.095, y = 0.39, just = "left",
-  gp = gpar(col = colours[["graphite"]], fontsize = 18)
-)
-
-grid.roundrect(
-  x = 0.665, y = 0.48, width = 0.57, height = 0.49,
-  r = unit(0.025, "npc"),
-  gp = gpar(fill = colours[["white"]], col = colours[["pale"]], lwd = 2)
-)
-grid.text(
-  "Koeficienty druhu (g)",
-  x = 0.42, y = 0.66, just = "left",
-  gp = gpar(col = colours[["graphite"]], fontsize = 21, fontface = "bold")
-)
-
-axis_start <- 0.58
-axis_end <- 0.79
-map_x <- function(value) axis_start + (axis_end - axis_start) * value / 1600
-for (tick in c(0, 500, 1000, 1500)) {
-  x <- map_x(tick)
-  grid.lines(x = c(x, x), y = c(0.34, 0.58), gp = gpar(col = colours[["pale"]], lwd = 1.5))
-  grid.text(number_cz(tick), x = x, y = 0.31, gp = gpar(col = colours[["olive"]], fontsize = 13))
+for (i in seq_along(code_lines)) {
+  grid.text(
+    code_lines[[i]],
+    x = 0.08, y = code_top - 0.02 - line_step * (i - 0.5), just = "left",
+    gp = gpar(col = colours[["graphite"]], fontsize = 21, fontfamily = "Consolas")
+  )
 }
 
-species_rows <- data.frame(
-  label = c("Chinstrap", "Gentoo"),
-  term = c("druhChinstrap", "druhGentoo"),
-  y = c(0.52, 0.41),
-  colour = c(colours[["olive"]], colours[["indigo"]])
+# Output block
+output_top <- code_top - code_height - 0.04
+output_height <- line_step * length(output_lines) + 0.04
+grid.rect(
+  x = 0.05, y = output_top, width = 0.90, height = output_height,
+  just = c("left", "top"),
+  gp = gpar(fill = colours[["pale"]], col = NA)
 )
-for (row in seq_len(nrow(species_rows))) {
-  item <- species_rows[row, ]
-  value <- estimates[[item$term]]
-  grid.text(item$label, x = 0.42, y = item$y, just = "left",
-            gp = gpar(col = colours[["graphite"]], fontsize = 18))
-  grid.lines(x = c(axis_start, map_x(value)), y = rep(item$y, 2),
-             gp = gpar(col = item$colour, lwd = 7, lend = "round"))
-  grid.circle(x = map_x(value), y = item$y, r = unit(0.009, "npc"),
-              gp = gpar(fill = item$colour, col = item$colour))
-  grid.text(paste0("+", number_cz(value), " g"), x = 0.92, y = item$y,
-            just = "right", gp = gpar(col = item$colour, fontsize = 19, fontface = "bold"))
+for (i in seq_along(output_lines)) {
+  grid.text(
+    output_lines[[i]],
+    x = 0.08, y = output_top - 0.02 - line_step * (i - 0.5), just = "left",
+    gp = gpar(col = colours[["graphite"]], fontsize = 21, fontfamily = "Consolas")
+  )
 }
-
-grid.text(
-  "Odhady z modelu použitého v L06.",
-  x = 0.06, y = 0.14, just = "left",
-  gp = gpar(col = colours[["graphite"]], fontsize = 17)
-)
 grDevices::dev.off()
