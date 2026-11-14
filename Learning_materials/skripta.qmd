@@ -172,7 +172,7 @@ Po prostudování této lekce budete schopni:
 - vysvětlit, proč se `r render_glossary_term("odhad", display = "odhad")` `r render_glossary_term("efekt", display = "efektu")` po přidání prediktoru může změnit, a odlišit celkový a podmíněný vztah;
 - rozpoznat silně `r render_glossary_term("korelace-predikatoru", display = "korelované prediktory")` a popsat, jak zvyšují `r render_glossary_term("nejistota", display = "nejistotu")` a komplikují výklad;
 - porovnat skupiny a vytvářet `r render_glossary_term("predikce", display = "predikce")` jen pro kombinace hodnot podložené daty;
-- odlišit test koeficientu v `summary()` od sekvenčního testu v `anova()`.
+- odlišit test koeficientu v `summary()` od `r render_glossary_term("sekvencni-test", display = "sekvenčního testu")` v `anova()`.
 
 ## Každý řádek je jedna zdrojová populace
 
@@ -1602,7 +1602,7 @@ data_primky_druhu$odhad <-
   predict(object = mod_zobak_druh, newdata = data_primky_druhu)
 ```
 
-Celkový vztah a vztah uvnitř skupin se mohou lišit nejen velikostí, ale i směrem. Takové situaci se říká **Simpsonův paradox**. <!-- TODO: add slug simpsonuv-paradox to pojmy.yaml --> U křídlatky se celkový záporný sklon při stejném původu téměř vytratil; jeho odhad je dokonce mírně kladný, ale interval spolehlivosti zahrnuje nulu, takže směr neznáme. Zřetelný obrat směru ukazují tučňáci z minulé lekce:
+Celkový vztah a vztah uvnitř skupin se mohou lišit nejen velikostí, ale i směrem. Takové situaci se říká **`r render_glossary_term("simpsonuv-paradox", display = "Simpsonův paradox")`**. U křídlatky se celkový záporný sklon při stejném původu téměř vytratil; jeho odhad je dokonce mírně kladný, ale interval spolehlivosti zahrnuje nulu, takže směr neznáme. Zřetelný obrat směru ukazují tučňáci z minulé lekce:
 
 ```{r}
 #| label: extra-simpson-graf
@@ -2121,7 +2121,7 @@ Oba řádky mají interval spolehlivosti pro modelový průměr. Model vypočít
 
 ## Záleží u testu na pořadí prediktorů?
 
-V předchozích lekcích jsme testovali, zda je koeficient slučitelný s nulou, a funkcí `anova()` jsme pokládali celkovou otázku o rozdílech mezi skupinami. U modelu s několika `r render_glossary_term("prediktor", display = "prediktory")` musíme rozlišit **test koeficientu** a **sekvenční test prediktoru**. Oba uvádějí `r render_glossary_term("p-hodnota", display = "p-hodnotu")`, ale odpovídají na jinak formulované otázky.
+V předchozích lekcích jsme testovali, zda je koeficient slučitelný s nulou, a funkcí `anova()` jsme pokládali celkovou otázku o rozdílech mezi skupinami. U modelu s několika `r render_glossary_term("prediktor", display = "prediktory")` musíme rozlišit **test koeficientu** a **`r render_glossary_term("sekvencni-test", display = "sekvenční test")` prediktoru**. Oba uvádějí `r render_glossary_term("p-hodnota", display = "p-hodnotu")`, ale odpovídají na jinak formulované otázky.
 
 Vytvoříme druhý zápis stejného modelu. Obsahuje stejné dva prediktory a liší se pouze jejich pořadím ve formuli:
 
@@ -2242,7 +2242,7 @@ Pořadí prediktorů ve formuli mění **p-hodnoty sekvenčních testů z `anova
 
 ::: {.box-data title="Doplňující: testy nezávislé na pořadí prediktorů" collapse="true"}
 
-Tabulka z `anova()` používá sekvenční testy (v literatuře také testy typu I): každý člen testuje po členech, které stojí ve formuli před ním. Funkce `car::Anova()` z balíčku `car` (pokud jej nemáte, nainstalujte jej jednou příkazem `install.packages("car")` v Console) počítá **testy typu II** (ve výstupu *Type II tests*): každý prediktor testuje po zohlednění všech ostatních prediktorů. Testy typu II proto na rozdíl od sekvenčních testů nepřidělují sdílenou informaci podle pořadí členů ve formuli. V `r render_glossary_term("aditivni-model", display = "aditivním modelu")` je test typu II stejný, jako kdyby byl daný prediktor ve formuli poslední, a u numerického prediktoru odpovídá `r render_glossary_term("t-test", display = "t-testu")` jeho koeficientu ze `summary()` ($F = t^2$).
+Tabulka z `anova()` používá sekvenční testy (v literatuře také testy typu I): každý člen testuje po členech, které stojí ve formuli před ním. Funkce `car::Anova()` z balíčku `car` (pokud jej nemáte, nainstalujte jej jednou příkazem `install.packages("car")` v Console) počítá **`r render_glossary_term("test-typu-ii", display = "testy typu II")`** (ve výstupu *Type II tests*): každý prediktor testuje po zohlednění všech ostatních prediktorů. Testy typu II proto na rozdíl od sekvenčních testů nepřidělují sdílenou informaci podle pořadí členů ve formuli. V `r render_glossary_term("aditivni-model", display = "aditivním modelu")` je test typu II stejný, jako kdyby byl daný prediktor ve formuli poslední, a u numerického prediktoru odpovídá `r render_glossary_term("t-test", display = "t-testu")` jeho koeficientu ze `summary()` ($F = t^2$).
 
 ```{r}
 #| label: extra-porovnat-testy-typu-ii
@@ -2302,7 +2302,7 @@ Výběr prediktorů budeme formulovat jako porovnání předem smysluplných `r 
 3. Porovnávané modely fitujte na stejných řádcích.
 4. Přeložte každý koeficient do věty „při stejných hodnotách ostatních prediktorů“.
 5. Porovnejte `r render_glossary_term("odhad", display = "odhady")` i jejich `r render_glossary_term("nejistota", display = "nejistotu")`, nejen `r render_glossary_term("p-hodnota", display = "p-hodnoty")`.
-6. Rozlište test koeficientu od sekvenčního testu a u sekvenčního testu zdůvodněte pořadí prediktorů.
+6. Rozlište test koeficientu od `r render_glossary_term("sekvencni-test", display = "sekvenčního testu")` a u sekvenčního testu zdůvodněte pořadí prediktorů.
 7. Predikujte pouze pro podporované kombinace hodnot.
 8. Zkontrolujte `r render_glossary_term("residuum", display = "residua")` a `r render_glossary_term("vlivne-pozorovani", display = "vlivná pozorování")`; nemažte je automaticky.
 
@@ -2330,7 +2330,7 @@ Ve společné zahradě v Šanghaji měly populace křídlatky z teplejších mí
 - Přidání prediktoru může výrazně změnit velikost i směr `r render_glossary_term("odhad", display = "odhadu")`, protože model odpovídá na jinou otázku. Když třetí proměnná souvisí s prediktorem i s odezvou, celkový vztah mísí více cest (`r render_glossary_term("konfundovani", display = "konfundování")`).
 - `r render_glossary_term("korelace-predikatoru", display = "Korelované prediktory")` nesou překrývající se informaci; jejich samostatné příspěvky odhadujeme s větší `r render_glossary_term("nejistota", display = "nejistotou")`.
 - Skupiny porovnáváme a `r render_glossary_term("predikce", display = "predikce")` vytváříme jen pro kombinace hodnot, které mají v datech oporu.
-- Pořadí prediktorů mění `r render_glossary_term("p-hodnota", display = "p-hodnoty")` sekvenčních testů z `anova()`, nikoli koeficienty a jejich testy v `summary()`.
+- Pořadí prediktorů mění `r render_glossary_term("p-hodnota", display = "p-hodnoty")` `r render_glossary_term("sekvencni-test", display = "sekvenčních testů")` z `anova()`, nikoli koeficienty a jejich testy v `summary()`.
 
 {{< pagebreak >}}
 
