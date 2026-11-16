@@ -305,6 +305,19 @@ Teacher decision: fix every finding of the independent review now (no deferral).
 - Accepted leaks to watch in Moodle item statistics: `konfundovani`, `model-odvozeni`, `sklon-nejistota`, `testy-koeficientu`.
 - Ondřej Mottl approved the Moodle questions on 2026-11-14 („I approve the questions“); no further revisions requested.
 
+## Lecture-day deck changes (2026-11-16)
+
+Requested by Ondřej Mottl on the morning of the lecture (slide numbers of the live HTML deck), approved after the render the same day („I approve“):
+
+- 23 „Každý sklon platí…“: raw `coef(object = mod_dve_teploty)` output above the slope cards.
+- New slide before 35, „Co ještě zůstalo v residuích?“: residuals against fitted values of `mod_dve_teploty`, grey first (pair question), then coloured by origin. Mean residual −0,016 mm for původní and +0,012 mm for zavlečené (65 % below and 59 % above zero), so the takeaway says „v průměru“; a hidden guard checks the signs.
+- 37 „Jeden model spojí teplotu i původ“: `levels()` output and the reference group (původní) before the coefficient table.
+- 51 „Odhad při 14 °C“: difference of the two predictions, 0,441 − 0,332 = 0,109 mm = `puvodZavlečené`.
+- 54 „Co zjistíme při stejné teplotě?“: arrow between the two model means at 14 °C labelled with the difference, and a model answer as the last fragment.
+- 63 „Sekvenční test čte formuli zleva doprava“: deleted (the `anova()` outputs on the earlier slide carry the comparison).
+
+Render: the poll was open for voting, so no sync was run; the deck reused the verified PollsLive outputs of the 2026-11-14 sync (quiz inputs unchanged). Not done for time: independent reviewer pass, browser check of fragment order.
+
 ## Open items
 
 - Human approval by Ondřej Mottl, all on 2026-11-14 with no further revisions requested: the Moodle questions („I approve the questions“), the skripta and the exercise („I am approving Skripta and exercise“), and the deck after re-reading the final render, title image included („I approve the deck“).
