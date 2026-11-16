@@ -876,6 +876,13 @@ Oba teploměry vstupují do jednoho modelu; každý dostane vlastní koeficient.
 
 ## Každý sklon platí při stejné hodnotě druhé teploty
 
+```{r}
+#| label: zobrazit-coef-dve-teploty
+#| echo: true
+#| eval: true
+coef(object = mod_dve_teploty)
+```
+
 ::: {.layout-stack .layout-center-y}
 ::: columns
 ::: {.column width="48%"}
@@ -1791,6 +1798,124 @@ Pruh mezi `r vec_pruh_maxima_C[[1]]` a `r vec_pruh_maxima_C[[2]]` °C nejteplej�
 
 # Původ populací
 
+## Co ještě zůstalo v residuích?
+
+```{r}
+#| label: pripravit-residua-dve-teploty
+#| include: false
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+data_residua_dve <-
+  tibble::tibble(
+    odhad = fitted(object = mod_dve_teploty),
+    residuum = residuals(object = mod_dve_teploty),
+    puvod = data_kridlatka$puvod
+  )
+
+# The reveal says that the mean residual is below zero for native and above
+#   zero for introduced populations.
+prumer_residui_puvod <-
+  tapply(
+    X = data_residua_dve$residuum,
+    INDEX = data_residua_dve$puvod,
+    FUN = mean
+  )
+stopifnot(
+  "Mean residuals of the two origins must have opposite signs" =
+    prumer_residui_puvod[["Původní"]] < 0 &&
+      prumer_residui_puvod[["Zavlečené"]] > 0
+)
+
+p_residua_dve <-
+  ggplot2::ggplot(
+    data = data_residua_dve,
+    mapping = ggplot2::aes(
+      x = odhad,
+      y = residuum
+    )
+  ) +
+  ggplot2::geom_hline(
+    yintercept = 0,
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1
+  ) +
+  ggplot2::labs(
+    x = "Odhadnutá tloušťka (mm)",
+    y = "Residuum (mm)"
+  ) +
+  theme_l07
+
+p_residua_dve_sede <-
+  p_residua_dve +
+  ggplot2::geom_point(
+    color = biostat_cols[["grey_olive"]],
+    alpha = 0.72,
+    size = 2.8
+  )
+
+# Same axes as the grey version; only the colour is added. The legend sits
+#   inside the panel so that both plots keep the same size.
+p_residua_dve_puvod <-
+  p_residua_dve +
+  ggplot2::geom_point(
+    mapping = ggplot2::aes(color = puvod),
+    alpha = 0.78,
+    size = 2.8
+  ) +
+  ggplot2::scale_color_manual(
+    values = c(
+      "Původní" = vec_cols_origin[["Původní"]],
+      "Zavlečené" = vec_cols_origin[["Zavlečené"]]
+    ),
+    name = "Původ"
+  ) +
+  ggplot2::theme(
+    legend.position = "inside",
+    legend.position.inside = c(0.99, 0.99),
+    legend.justification = c(1, 1)
+  )
+```
+
+::: {.r-stack}
+```{r}
+#| label: zobrazit-residua-dve-sede
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-width: 8
+#| fig-height: 2.9
+#| fig-alt: "Graf residuí modelu se dvěma teplotami proti odhadnutým hodnotám; body nejsou náhodně rozptýlené kolem nuly."
+p_residua_dve_sede
+```
+
+::: {.fragment fragment-index=1}
+```{r}
+#| label: zobrazit-residua-dve-puvod
+#| echo: false
+#| eval: true
+#| message: false
+#| warning: false
+#| fig-width: 8
+#| fig-height: 2.9
+#| fig-alt: "Stejný graf residuí s barvou podle původu: residua původních populací leží v průměru pod nulou, residua zavlečených nad nulou."
+p_residua_dve_puvod
+```
+:::
+:::
+
+[Ve dvojici:]{.text-bold .text-color-indigo_velvet} Model `mod_dve_teploty` nezachytil všechno. Co by mohlo vytvářet strukturu v residuích?
+
+::: {.takeaway-strip .fragment fragment-index=1}
+Residua [původních]{style="color: #4E9A8A; font-weight: bold;"} populací leží v průměru pod nulou, [zavlečených]{style="color: #C2613A; font-weight: bold;"} nad nulou: model zatím nezná **původ**.
+:::
+
+::: {.notes}
+Nejdřív šedé body: nechte dvojice navrhnout, co by mohlo residua třídit (původ, kontinent, společná zahrada…). Teprve potom odkryjte barvy podle původu. Navazuje na otázku ze snímku „Zachytila přímka všechno?“.
+:::
+
 ## Vypadá vztah stejně u obou původů?
 
 ```{r}
@@ -1910,6 +2035,8 @@ odhad_puvod <-
   setNames(coef_puvod_tidy$estimate, coef_puvod_tidy$term)
 ```
 
+:::: {.columns}
+::: {.column width="52%"}
 ```r
 mod_puvod <- lm(
   formula = tloustka_listu_mm ~
@@ -1919,8 +2046,18 @@ mod_puvod <- lm(
 
 coef(object = mod_puvod)
 ```
+:::
+::: {.column width="46%"}
+```{r}
+#| label: zobrazit-urovne-puvodu
+#| echo: true
+#| eval: true
+levels(x = data_kridlatka$puvod)
+```
 
-<br>
+[Referenční skupina]{.text-hgl-indigo_velvet} = první úroveň: **původní** populace. Koeficient `puvodZavlečené` je posun zavlečených oproti nim.
+:::
+::::
 
 Koeficienty z `coef()`, doplněné o biologickou roli:
 
@@ -3025,7 +3162,8 @@ $$
 :::
 :::
 
-::: {.fragment}
+:::: {.columns}
+::: {.column width="44%" .fragment}
 
 ```{r}
 #| label: predikce-srovnani
@@ -3039,6 +3177,15 @@ predict(
 )
 ```
 :::
+::: {.column width="54%" .fragment}
+<br>
+
+[Rozdíl odhadů:]{.text-bold}
+$`r format_value_cz(vec_odhad_srovnani[[2]], digits = 3, math = TRUE)` - `r format_value_cz(vec_odhad_srovnani[[1]], digits = 3, math = TRUE)` = \mathbf{`r format_value_cz(diff(vec_odhad_srovnani), digits = 3, math = TRUE)`}\ \text{mm}$
+
+= koeficient `puvodZavlečené` (`r format_value_cz(odhad_puvod[["puvodZavlečené"]], digits = 5)`)
+:::
+::::
 
 ::: {.notes}
 Nejdřív obecný vzorec, pak koeficienty z coef(), nakonec čísla pro obě skupiny. $\hat\beta_1$ je řádek puvodZavlečené a $\hat\beta_2$ řádek teplota_rocni_C. Obě skupiny mají stejnou teplotu; liší se jen přepínač $x_1$, takže rozdíl odhadů je přesně koeficient puvodZavlečené. Funkce predict() vrátí totéž.
@@ -3195,13 +3342,40 @@ p_predikce_srovnani <-
     ),
     guide = "none"
   )
+
+# Vertical line between the two model means at the comparison temperature:
+#   the difference between origins at the same temperature.
+rozdil_srovnani <- diff(data_predikce_srovnani$fit)
+
+p_predikce_srovnani_rozdil <-
+  p_predikce_srovnani +
+  ggplot2::annotate(
+    geom = "segment",
+    x = teplota_srovnani_C + 0.7,
+    xend = teplota_srovnani_C + 0.7,
+    y = data_predikce_srovnani$fit[[1]],
+    yend = data_predikce_srovnani$fit[[2]],
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1.3,
+    arrow = ggplot2::arrow(
+      ends = "both",
+      length = ggplot2::unit(0.12, "inches")
+    )
+  ) +
+  ggplot2::annotate(
+    geom = "label",
+    x = teplota_srovnani_C + 0.9,
+    y = mean(data_predikce_srovnani$fit),
+    label = paste0(format_value_cz(rozdil_srovnani, digits = 3), " mm"),
+    hjust = 0,
+    size = 6,
+    color = biostat_cols[["indigo_velvet"]],
+    fill = biostat_cols[["white"]]
+  )
 ```
 
 
 ::: columns
-
-<br>
-<br>
 
 ::: {.column width="52%"}
 ```{r}
@@ -3211,9 +3385,9 @@ p_predikce_srovnani <-
 #| message: false
 #| warning: false
 #| fig-width: 7
-#| fig-height: 6
-#| fig-alt: "Dva modelové průměry při společné srovnávací teplotě ukazují vyšší tloušťku listů zavlečených populací a jejich intervaly spolehlivosti."
-p_predikce_srovnani
+#| fig-height: 5.6
+#| fig-alt: "Dva modelové průměry při společné srovnávací teplotě ukazují vyšší tloušťku listů zavlečených populací a jejich intervaly spolehlivosti; svislá šipka mezi nimi ukazuje rozdíl mezi původy při stejné teplotě."
+p_predikce_srovnani_rozdil
 ```
 :::
 ::: {.column width="44%"}
@@ -3227,8 +3401,12 @@ p_predikce_srovnani
 :::
 :::
 
+::: {.takeaway-strip .fragment .text-size-smaller}
+[Možná odpověď:]{.text-bold} Při stejné 🌡️ průměrné teplotě `r format_value_cz(teplota_srovnani_C, digits = 0)` °C mají [zavlečené]{style="color: #C2613A; font-weight: bold;"} populace podle modelu listy přibližně o [`r format_value_cz(rozdil_srovnani, digits = 3)` mm]{.text-hgl-indigo_velvet} tlustší než [původní]{style="color: #4E9A8A; font-weight: bold;"} (95% intervaly spolehlivosti: `r format_value_cz(data_predikce_srovnani$lwr[[1]], digits = 3)`–`r format_value_cz(data_predikce_srovnani$upr[[1]], digits = 3)` mm a `r format_value_cz(data_predikce_srovnani$lwr[[2]], digits = 3)`–`r format_value_cz(data_predikce_srovnani$upr[[2]], digits = 3)` mm).
+:::
+
 ::: {.notes}
-Tichý zápis, potom porovnání ve dvojici. Nechte jednu větu přečíst nahlas.
+Tichý zápis, potom porovnání ve dvojici. Nechte jednu větu přečíst nahlas. Svislá šipka je rozdíl mezi původy při stejné teplotě; až potom odkryjte možnou odpověď.
 :::
 
 
@@ -3594,54 +3772,6 @@ Ilustrace vytvořená pomocí AI.
 
 ::: {.notes}
 Fronta: kdo stojí ve formuli první, odnese si i společnou hromádku informace; druhý dostane jen to, co zbylo navíc.
-:::
-
-## Sekvenční test čte formuli zleva doprava
-
-```{r}
-#| label: pripravit-sekvencni-testy
-#| include: false
-#| echo: false
-#| eval: true
-#| message: false
-#| warning: false
-data_anova_poradi <-
-  dplyr::bind_rows(
-    broom::tidy(anova(mod_dve_teploty)) |>
-      dplyr::slice_head(n = 2) |>
-      dplyr::mutate(
-        poradi = c("🌡️ → 🌞", ""),
-        termin = c("🌡️ průměrná", "🌞 maximum po 🌡️ průměrné")
-      ),
-    broom::tidy(anova(mod_dve_teploty_opacne)) |>
-      dplyr::slice_head(n = 2) |>
-      dplyr::mutate(
-        poradi = c("🌞 → 🌡️", ""),
-        termin = c("🌞 maximum", "🌡️ průměrná po 🌞 maximu")
-      )
-  ) |>
-  dplyr::mutate(
-    text_p = dplyr::if_else(
-      condition = p.value < 0.001,
-      true = "< 0,001",
-      false = format_value_cz(p.value, digits = 3)
-    )
-  )
-```
-
-::: {.text-size-smaller}
-| Pořadí | Termín | Součet čtverců | F | p |
-|---|---|---:|---:|---:|
-| `r data_anova_poradi$poradi[[1]]` | `r data_anova_poradi$termin[[1]]` | `r format_value_cz(data_anova_poradi$sumsq[[1]], digits = 5)` | `r format_value_cz(data_anova_poradi$statistic[[1]], digits = 2)` | `r data_anova_poradi$text_p[[1]]` |
-| `r data_anova_poradi$poradi[[2]]` | `r data_anova_poradi$termin[[2]]` | `r format_value_cz(data_anova_poradi$sumsq[[2]], digits = 5)` | `r format_value_cz(data_anova_poradi$statistic[[2]], digits = 2)` | `r data_anova_poradi$text_p[[2]]` |
-| `r data_anova_poradi$poradi[[3]]` | `r data_anova_poradi$termin[[3]]` | `r format_value_cz(data_anova_poradi$sumsq[[3]], digits = 5)` | `r format_value_cz(data_anova_poradi$statistic[[3]], digits = 2)` | `r data_anova_poradi$text_p[[3]]` |
-| `r data_anova_poradi$poradi[[4]]` | `r data_anova_poradi$termin[[4]]` | `r format_value_cz(data_anova_poradi$sumsq[[4]], digits = 5)` | `r format_value_cz(data_anova_poradi$statistic[[4]], digits = 2)` | `r data_anova_poradi$text_p[[4]]` |
-:::
-
-<br>
-
-::: {.takeaway-strip .fragment}
-[Sdílená informace]{.text-hgl-orange} se započítá prvnímu termínu. Proto se řádky po prohození změní.
 :::
 
 ## Pořadí mění sekvenční test, nikoli odhadnuté hodnoty
