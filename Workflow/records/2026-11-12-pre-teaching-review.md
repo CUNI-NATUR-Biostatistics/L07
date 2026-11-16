@@ -318,6 +318,8 @@ Requested by Ondřej Mottl on the morning of the lecture (slide numbers of the l
 
 Render: the poll was open for voting, so no sync was run; the deck reused the verified PollsLive outputs of the 2026-11-14 sync (quiz inputs unchanged). Not done for time: independent reviewer pass, browser check of fragment order.
 
+Released as `L07-v1.5.1-20261116`. During the lecture the PollsLive participation page returned HTTP 500 for students (PollsLive server error; results embed and other polls worked, no responses recorded). Ondřej Mottl asked to close the poll and release a deck without the live quiz: poll closed manually on 2026-11-16 (published, voting closed, public results off); the deck re-rendered in offline mode (questions, answers and explanations kept, QR, participation link and results embed removed).
+
 ## Open items
 
 - Human approval by Ondřej Mottl, all on 2026-11-14 with no further revisions requested: the Moodle questions („I approve the questions“), the skripta and the exercise („I am approving Skripta and exercise“), and the deck after re-reading the final render, title image included („I approve the deck“).
